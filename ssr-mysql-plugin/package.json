@@ -1,0 +1,14 @@
+{
+  "name": "ssr-mysql-plugin",
+  "version": "1.0.0",
+  "description": "mysql的封装",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mysql"
+  ],
+  "author": "dragonchen",
+  "license": "ISC"
+}
