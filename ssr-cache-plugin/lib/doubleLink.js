@@ -1,7 +1,7 @@
 /**
  * @file 双向链表
  */
-import {isNull, isArray} from 'lodash';
+import {isNull, isArray, isFunction} from 'lodash';
 
 /**
  * List 节点
@@ -18,13 +18,18 @@ export default class DoubleLink {
         const node = val ? new ListNode(val) : null;
         this.head = node;
         this.tail = node;
-        this.current = null;
         this.length = isNull(node) ? 0 : 1;
     }
 
     static createLinkByArray (array) {
         if (isArray(array)) {
-
+            const list = new DoubleLink(array[0]);
+            array.forEach((val, index) => {
+                if (index !== 0) {
+                    list.push(val)
+                }
+            });
+            return list;
         } else {
             throw new Error('the param must be array!');
         }
@@ -35,17 +40,21 @@ export default class DoubleLink {
      * @return {number}
      */
     getLength () {
-
+        return this.length;
     }
 
     /**
      * 头部插入
-     * @param {String} key
      * @param {any} val
      * @return {ListNode}
      */
-    unshift (key, val) {
-
+    unshift (val) {
+        const node = new ListNode(val);
+        this.length = this.length + 1;
+        this.head.prev = node;
+        node.next = this.head;
+        this.head = node;
+        return node;
     }
 
     /**
@@ -53,17 +62,30 @@ export default class DoubleLink {
      * @return {ListNode}
      */
     shift () {
-
+        if (isNull(this.head)) {
+            return null
+        }
+        this.length = this.length - 1;
+        const head = this.head;
+        const next = this.head.next;
+        next.prev = null;
+        head.next = null;
+        this.head = next;
+        return head;
     }
 
     /**
      * 尾部插入
-     * @param {String} key
      * @param {any} val
      * @return {ListNode}
      */
-    push (key, val) {
-
+    push (val) {
+        const node = new ListNode(val);
+        this.length = this.length + 1;
+        this.tail.next = node;
+        node.prev = this.tail;
+        this.tail = node;
+        return node;
     }
 
     /**
@@ -71,62 +93,131 @@ export default class DoubleLink {
      * @return {ListNode}
      */
     pop () {
-
+        if (isNull(this.head)) {
+            return null
+        }
+        this.length = this.length - 1;
+        const tail = this.tail;
+        const prev = this.tail.prev;
+        prev.next = null;
+        tail.prev = null;
+        this.tail = prev;
+        return tail;
     }
 
     /**
-     * 转成成数组
+     * 转成数组
      * @return {Array}
      */
     toArray () {
+        const array = [];
+        let node = this.head;
+        while(node) {
+            array.push(node.value);
+            node = node.next;
+        }
+        return array;
+    }
 
+    /**
+     * 转成反向数组
+     * @return {Array}
+     */
+    toReveseArray () {
+        const array = [];
+        let node = this.tail;
+        while(node) {
+            array.push(node.value);
+            node = node.prev;
+        }
+        return array;
     }
 
     /**
      * 获取key的节点
-     * @param {String} key
+     * @param {any | Function} target
      * @return {ListNode}
      */
-    get (key) {
-
+    get (target) {
+        let node = this.head;
+        let found = false;
+        while (node && !found) {
+            const value = node.value;
+            found = isFunction(target) ? target(value) : target = value;
+            node = found ? node : node.next;
+        }
+        return isNull(node) ? null : node;
     }
 
     /**
      * 将某个节点放到制定节点之后或者之前
-     * @param {String} key
      * @param {any} val
-     * @param {String} targetKey
+     * @param {String | Function} targetValue
      * @param {String} position
      * @return {ListNode}
      */
-    set (key, val, targetKey, position) {
-
+    set (val, targetValue, position = 'after') {
+        let current = this.get(targetValue);
+        if (isNull(current)) {
+            return null
+        }
+        const node = new ListNode(val);
+        if (position === 'after') {
+            const next = current.next;
+            current.next = node;
+            next.prev = node;
+            node.prev = current;
+            node.next = next;
+        } else {
+            const prev = current.prev;
+            current.prev = node;
+            prev.next = node;
+            node.prev = prev;
+            node.next = current
+        }
+        this.length = this.length + 1;
+        return node;
     }
 
     /**
      * 删除制定的key
-     * @param {String} key
+     * @param {String | Function} val
      * @return {ListNode}
      */
-    remove (key) {
-
+    remove (val) {
+        let current = this.get(val);
+        const prev = current.prev;
+        const next = current.next;
+        prev.next = next;
+        next.prev = prev;
+        current.prev = null;
+        current.next = null;
+        this.length = this.length - 1;
+        return current;
     }
 
     /**
      * 是否存在key
-     * @param {String} key
+     * @param {String | Function} val
      * @return {Boolean}
      */
-    has (key) {
-
+    has (val) {
+        const current = this.get(val);
+        return isNull(current);
     }
 
     /**
      * 对节点进行处理
      * @param {Function} callback
+     * @return {ListNode}
      */
     map (callback) {
-
+        let node = this.head;
+        for (let i = 0; i < this.length; i++) {
+            node.value = isFunction(callback) ? callback(node.value, i) : node.value;
+            node = node.next;
+        }
+        return this.head;
     }
 
     /**
@@ -134,13 +225,21 @@ export default class DoubleLink {
      * @param {Function} callback
      */
     forEach (callback) {
-
+        let node = this.head;
+        for (let i = 0; i < this.length; i++) {
+            node.value = isFunction(callback) ? callback(node.value, i) : node.value;
+            node = node.next;
+        }
     }
 
     /**
      * 重置DoubleList
+     * @param {any} val
      */
-    reset () {
-
+    reset (val) {
+        const node = val ? new ListNode(val) : null;
+        this.head = node;
+        this.tail = node;
+        this.length = isNull(node) ? 0 : 1;
     }
 }
