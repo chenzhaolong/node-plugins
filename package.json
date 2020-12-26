@@ -4,7 +4,7 @@
   "description": "node的插件",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "jest": "jest"
   },
   "repository": {
     "type": "git",
@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/chenzhaolong/node-plugins/issues"
   },
-  "homepage": "https://github.com/chenzhaolong/node-plugins#readme"
+  "homepage": "https://github.com/chenzhaolong/node-plugins#readme",
+  "dependencies": {
+    "jest": "^26.6.3"
+  }
 }

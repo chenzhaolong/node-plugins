@@ -4,7 +4,7 @@
   "description": "ssr缓存插件",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test_d": "sh ./bin/test.sh -d"
   },
   "keywords": [
     "ssr",
