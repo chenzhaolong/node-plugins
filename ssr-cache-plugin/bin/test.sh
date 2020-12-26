@@ -12,5 +12,5 @@ while [ -n "$1" ]
    esac
 done
 if [ "$file" != "" ];then
-   jest ./ssr-cache-plugin/test/$file
+   mocha --require babel-register ./ssr-cache-plugin/test/$file
 fi
