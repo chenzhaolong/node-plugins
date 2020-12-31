@@ -51,9 +51,14 @@ export default class DoubleLink {
     unshift (val) {
         const node = new ListNode(val);
         this.length = this.length + 1;
-        this.head.prev = node;
-        node.next = this.head;
-        this.head = node;
+        // 补充初始化
+        if (isNull(this.tail) && isNull(this.head)) {
+            this.tail = this.head = node;
+        } else {
+            this.head.prev = node;
+            node.next = this.head;
+            this.head = node;
+        }
         return node;
     }
 
@@ -82,9 +87,14 @@ export default class DoubleLink {
     push (val) {
         const node = new ListNode(val);
         this.length = this.length + 1;
-        this.tail.next = node;
-        node.prev = this.tail;
-        this.tail = node;
+        // 补充初始化
+        if (isNull(this.tail) && isNull(this.head)) {
+            this.tail = this.head = node;
+        } else {
+            this.tail.next = node;
+            node.prev = this.tail;
+            this.tail = node;
+        }
         return node;
     }
 
