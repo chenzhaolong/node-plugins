@@ -225,7 +225,7 @@ export default class DoubleLink {
      */
     has (val) {
         const current = this.get(val);
-        return isNull(current);
+        return !isNull(current);
     }
 
     /**

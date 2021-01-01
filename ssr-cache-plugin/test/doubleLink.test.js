@@ -161,5 +161,20 @@ describe('test.sh doubleLink', function() {
         ]);
     });
 
-    
+    it('test the node has existed', () => {
+        const link = DoubleLink.createLinkByArray([1,2,3,4,5]);
+        expect(link.has(4)).to.equal(true);
+        expect(link.has(6)).to.equal(false);
+
+        const array = [
+            {key: 'a1', value: 12},
+            {key: 'a2', value: 13},
+            {key: 'a3', value: 14},
+            {key: 'a4', value: 15},
+            {key: 'a5', value: 16}
+        ];
+        const link1 = DoubleLink.createLinkByArray(array);
+        expect(link1.has(item => item.key === 'a5')).to.equal(true);
+        expect(link1.has(item => item.key === 'a51')).to.equal(false);
+    })
 });
