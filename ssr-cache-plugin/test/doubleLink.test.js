@@ -114,5 +114,25 @@ describe('test.sh doubleLink', function() {
         expect(node1).to.equal(null);
     });
 
-    it('test')
+    it('test the setting value', () => {
+        const link = new DoubleLink();
+        const node = link.set(1, 2);
+        expect(node).to.equal(null);
+
+        link.push(1);
+        link.unshift(1);
+        link.set(2, 1);
+        expect(link.toArray()).to.deep.equal([1,2,1]);
+
+        link.unshift(3);
+        link.set(5, 3, 'before');
+        expect(link.toArray()).to.deep.equal([5,3,1,2,1]);
+
+        link.pop();
+        link.set(5, 2);
+        expect(link.toArray()).to.deep.equal([5,3,1,2,5]);
+
+        link.set(10, 3);
+        expect(link.toArray()).to.deep.equal([5,3,10,1,2,5]);
+    });
 });

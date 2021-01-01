@@ -175,15 +175,24 @@ export default class DoubleLink {
         if (position === 'after') {
             const next = current.next;
             current.next = node;
-            next.prev = node;
             node.prev = current;
             node.next = next;
+            if (isNull(next)) {
+                this.tail = node;
+            } else {
+                next.prev = node;
+            }
         } else {
             const prev = current.prev;
             current.prev = node;
-            prev.next = node;
+            node.next = current;
             node.prev = prev;
-            node.next = current
+            // 是否为头结点
+            if (isNull(prev)) {
+                this.head = node;
+            } else {
+                prev.next = node;
+            }
         }
         this.length = this.length + 1;
         return node;
