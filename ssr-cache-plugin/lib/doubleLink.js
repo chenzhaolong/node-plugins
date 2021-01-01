@@ -1,7 +1,7 @@
 /**
  * @file 双向链表
  */
-import {isNull, isArray, isFunction, isNumber} from 'lodash';
+import {isNull, isArray, isFunction, isNumber, isBoolean} from 'lodash';
 
 /**
  * List 节点
@@ -153,8 +153,8 @@ export default class DoubleLink {
         let found = false;
         while (node && !found) {
             const value = node.value;
-            found = isFunction(target) ? target(value) : target = value;
-            node = found ? node : node.next;
+            found = isFunction(target) ? target(value) : target === value;
+            node = isBoolean(found) && found ? node : node.next;
         }
         return isNull(node) ? null : node;
     }

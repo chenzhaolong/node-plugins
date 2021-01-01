@@ -76,5 +76,43 @@ describe('test.sh doubleLink', function() {
         expect(link.toArray()).to.deep.equal([0, 1, 2, 3, 4]);
     });
 
-    
+    it('test the reverse the double link', () => {
+        const link = new DoubleLink();
+        const array = [1, 2, 3, 4, 5];
+        array.forEach(val => {
+            link.push(val);
+        });
+        expect(link.toReveseArray()).to.deep.equal(array.reverse())
+    });
+
+    it('test finding the target val', () => {
+        const array = [1,3,2,5,7,2];
+        const link = DoubleLink.createLinkByArray(array);
+        const targetValue = 2;
+        const node = link.get(targetValue);
+        expect(node.value).to.equal(targetValue);
+
+        const targetValue1 = 10;
+        const node1 = link.get(targetValue1);
+        expect(node1).to.equal(null);
+    });
+
+    it('test finding the target val when val is function', () => {
+        const array = [
+            {key: 'a1', value: 12},
+            {key: 'a2', value: 13},
+            {key: 'a3', value: 14},
+            {key: 'a4', value: 15},
+            {key: 'a5', value: 16}
+        ];
+        const link = DoubleLink.createLinkByArray(array);
+        const targetValue = {key: 'a3', value: 14};
+        const node = link.get((item) => item.key === targetValue.key);
+        expect(node.value).to.deep.equal(targetValue);
+
+        const node1 = link.get((item) => item.key === 'a6');
+        expect(node1).to.equal(null);
+    });
+
+    it('test')
 });
