@@ -1,7 +1,7 @@
 /**
  * @file 双向链表
  */
-import {isNull, isArray, isFunction} from 'lodash';
+import {isNull, isArray, isFunction, isNumber} from 'lodash';
 
 /**
  * List 节点
@@ -15,7 +15,7 @@ function ListNode(val) {
 
 export default class DoubleLink {
     constructor(val) {
-        const node = val ? new ListNode(val) : null;
+        const node = val || isNumber(val) ? new ListNode(val) : null;
         this.head = node;
         this.tail = node;
         this.length = isNull(node) ? 0 : 1;

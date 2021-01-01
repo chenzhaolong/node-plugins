@@ -60,5 +60,21 @@ describe('test.sh doubleLink', function() {
         expect(a2).to.deep.equal(array);
     });
 
+    it('test the double link when unshift, push, pop, shift', () => {
+        const link = new DoubleLink(0);
+        const array = [1, 2, 3];
+        array.forEach(val => {
+            link.push(val);
+        });
+        expect(link.toArray()).to.deep.equal([0, 1, 2, 3]);
+        link.unshift(-1);
+        link.push(4);
+        link.push(5);
+        expect(link.toArray()).to.deep.equal([-1, 0, 1, 2, 3, 4, 5]);
+        link.pop();
+        link.shift();
+        expect(link.toArray()).to.deep.equal([0, 1, 2, 3, 4]);
+    });
+
     
 });
