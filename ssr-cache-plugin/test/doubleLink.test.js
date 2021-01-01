@@ -176,5 +176,44 @@ describe('test.sh doubleLink', function() {
         const link1 = DoubleLink.createLinkByArray(array);
         expect(link1.has(item => item.key === 'a5')).to.equal(true);
         expect(link1.has(item => item.key === 'a51')).to.equal(false);
+    });
+
+    it('test the map function', () => {
+        const link = DoubleLink.createLinkByArray([1,2,3,4,5]);
+        link.map(val => ({val}));
+        expect(link.toArray()).to.deep.equal([
+            {val: 1},
+            {val: 2},
+            {val: 3},
+            {val: 4},
+            {val: 5}
+        ]);
+        const head = link.map(item => item.val * 10);
+        expect(link.toArray()).to.deep.equal([10, 20, 30, 40, 50]);
+        expect(head.value).to.equal(10)
+    });
+
+    it ('test the reset', () => {
+        const array = [1,2,3,4,5];
+        const link = DoubleLink.createLinkByArray(array);
+        expect(link.toArray()).to.deep.equal(array);
+        link.reset();
+        expect(link.toArray()).to.deep.equal([]);
+        link.reset(1);
+        expect(link.toArray()).to.deep.equal([1]);
+    });
+
+    it('test the link length', () => {
+        const link = DoubleLink.createLinkByArray([1,2,3,4,5]);
+        expect(link.getLength()).to.equal(5);
+
+        link.push(6);
+        link.remove(3);
+        link.pop();
+        link.set(10, 2);
+        link.set(11, 10, 'before');
+        link.unshift(9);
+        expect(link.getLength()).to.equal(7);
+        expect(link.toArray()).to.deep.equal([9,1,2,11,10,4,5])
     })
 });
