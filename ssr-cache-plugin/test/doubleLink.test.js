@@ -135,4 +135,31 @@ describe('test.sh doubleLink', function() {
         link.set(10, 3);
         expect(link.toArray()).to.deep.equal([5,3,10,1,2,5]);
     });
+
+    it('test the remove value', () => {
+        const link = DoubleLink.createLinkByArray([1,2,3,4,5]);
+        link.remove(3);
+        expect(link.toArray()).to.deep.equal([1,2,4,5]);
+        link.push(6);
+        link.set(3, 4);
+        expect(link.toArray()).to.deep.equal([1,2,4,3,5,6]);
+
+        const array = [
+            {key: 'a1', value: 12},
+            {key: 'a2', value: 13},
+            {key: 'a3', value: 14},
+            {key: 'a4', value: 15},
+            {key: 'a5', value: 16}
+        ];
+        const link1 = DoubleLink.createLinkByArray(array);
+        link1.remove(item => item.key === 'a4');
+        expect(link1.toArray()).to.deep.equal([
+            {key: 'a1', value: 12},
+            {key: 'a2', value: 13},
+            {key: 'a3', value: 14},
+            {key: 'a5', value: 16}
+        ]);
+    });
+
+    
 });

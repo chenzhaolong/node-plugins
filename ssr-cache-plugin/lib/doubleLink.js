@@ -205,6 +205,9 @@ export default class DoubleLink {
      */
     remove (val) {
         let current = this.get(val);
+        if (isNull(current)) {
+            return null;
+        }
         const prev = current.prev;
         const next = current.next;
         prev.next = next;
