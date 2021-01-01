@@ -30,5 +30,35 @@ describe('test.sh doubleLink', function() {
         });
         const array2 = link2.toArray();
         expect(array1).to.deep.equal(array2)
-    })
+    });
+
+    it('test the double link when add ele by unshift', () => {
+        const array = [{a: 1, b: 2}, {a: 1, b: 3}, {a: 3, b: 5}];
+        const link = new DoubleLink();
+        array.forEach(ele => {
+            link.unshift(ele);
+        });
+        const a1 = link.toArray();
+        expect(a1).to.deep.equal(array.reverse());
+        link.shift();
+        const a2 = link.toArray();
+        array.shift();
+        expect(a2).to.deep.equal(array);
+    });
+
+    it('test the double link when add ele by push', () => {
+        const array = [{a: 1, b: 2}, {a: 1, b: 3}, {a: 3, b: 5}];
+        const link = new DoubleLink();
+        array.forEach(ele => {
+            link.push(ele);
+        });
+        const a1 = link.toArray();
+        expect(a1).to.deep.equal(array);
+        link.pop();
+        const a2 = link.toArray();
+        array.pop();
+        expect(a2).to.deep.equal(array);
+    });
+
+    
 });
