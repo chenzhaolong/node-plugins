@@ -2,6 +2,8 @@
  * @file lru算法
  */
 import DoubleLink from './doubleLink';
+import {isString, isNumber} from 'lodash';
+import LoggerCode from './loggerCode';
 
 const OS = require('os');
 
@@ -51,12 +53,34 @@ export default class LRU {
 
     // 是否含有该key的缓存
     has(key) {
-
+        if (!isString(key) || !isNumber(key)) {
+            const self = this;
+            this.logger({
+                type: 'other',
+                context: self,
+                ...LoggerCode.ERROR_INPUT_KEY.errorCode,
+            });
+            return false;
+        }
+        return this.store.has(key);
     }
 
     // 该key是否过期
     isExpired(key) {
-
+        if (!isString(key) || !isNumber(key)) {
+            const self = this;
+            this.logger({
+                type: 'other',
+                context: self,
+                ...LoggerCode.ERROR_INPUT_KEY.errorCode,
+            });
+            return true;
+        }
+        if (!this.has(key)) {
+            return true
+        }
+        const node = this.link.get(item => item.key === key);
+        return Date.now() > node.value.currentTime + node.value.expiredTime;
     }
 
     // 返回所有缓存的内容，用数组表示；
@@ -82,8 +106,8 @@ export default class LRU {
     // 重置
     reset(showLog = true) {
         this.currentLength = 0;
-        this.store = new Map();
-        this.link = new DoubleLink();
+        this.store = new Map(); // 存取
+        this.link = new DoubleLink(); // 管理和排序
         if (showLog) {
             const self = this;
             this.logger({type: 'reset', context: self});
@@ -105,6 +129,6 @@ function CacheItem(options) {
     this.key = options.key;
     this.value = options.value;
     this.currentTime = Date.now();
-    this.expired = options.expired;
+    this.expiredTime = options.expiredTime;
     this.extraMsg = options.extraMsg;
 }
