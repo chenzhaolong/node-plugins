@@ -3,9 +3,9 @@
  */
 
 import Cache from './lib/cache'
-import Lru from 'lib/lru'
+import LRU from 'lib/lru'
 
 export default {
     Cache,
-    Lru
+    LRU
 }

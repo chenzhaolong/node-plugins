@@ -8,6 +8,9 @@ while [ -n "$1" ]
         -d)
            file="doubleLink.test.js"
            shift;;
+        -l)
+           file="lru.test.js"
+           shift;;
         *) shift;;
    esac
 done

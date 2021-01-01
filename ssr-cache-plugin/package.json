@@ -4,7 +4,8 @@
   "description": "ssr缓存插件",
   "main": "index.js",
   "scripts": {
-    "test_d": "sh ./bin/test.sh -d"
+    "test_d": "sh ./bin/test.sh -d",
+    "test_lru": "sh ./bin/test.sh -l"
   },
   "keywords": [
     "ssr",
