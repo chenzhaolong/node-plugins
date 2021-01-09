@@ -13,9 +13,9 @@ const MAX_AGE = 60 * 1000;
 
 const LOGGER_TYPE = {
     SAVE: 'save', // 保存
+    UPDATE: 'update', // 更新
     GET: 'get', // 获取
     DELETE: 'delete', // 删除
-    EXPIRED_DELETE: 'expired_delete', // 过期删除
     RESET: 'reset', // 重置
     OTHER: 'other' // 其他情况
 };
@@ -39,21 +39,98 @@ export default class LRU {
         this.reset();
     }
 
-    // 保存内容
+    /**
+     * 保存内容
+     * @param {object} options
+     * @return {boolean}
+     */
     save(options) {
-        // const {key, value, expired = this.maxAge, extraMsg = {}} = options;
-        // const cache = new CacheItem({key, value, expired, extraMsg});
-
+        const {key, value, expired = this.maxAge} = options;
+        const self = this;
+        // key不存在且已经到达长度
+        if (!this.has(key) && this.isOverLength()) {
+            this.currentLength -= 1;
+            const tail = this.link.pop();
+            tail && this.store.delete(tail.value.key);
+        }
+        const cache = new CacheItem({key, value, expired, extraMsg});
+        this.store.set(key, value);
+        if (this.has(key)) {
+            this.link.remove(item => item.key === key);
+            this.link.unshift(cache);
+            this.logger({type: LOGGER_TYPE.UPDATE, context: self});
+        } else {
+            this.link.unshift(cache);
+            this.currentLength += 1;
+            this.logger({type: LOGGER_TYPE.SAVE, context: self});
+        }
+        return true
     }
 
-    // 获取指定的key
+    /**
+     * 获取指定的key
+     * @param {string | number} key
+     * @return {any}
+     */
     get(key) {
-
+        const self = this;
+        if (!isString(key) || !isNumber(key)) {
+            this.logger({
+                type: LOGGER_TYPE.OTHER,
+                context: self,
+                ...LoggerCode.ERROR_INPUT_KEY
+            });
+            return null
+        }
+        if (this.has(key)) {
+            if (this.isExpired(key)) {
+                this.delete(key);
+                return null;
+            } else {
+                const target = this.link.get(item => item.key === key);
+                if (!target) {
+                    return null;
+                }
+                this.link.remove(item => item.key === key);
+                const content = target.value;
+                content.currentTime = Date.now();
+                this.link.unshift(content);
+                this.logger({type: LOGGER_TYPE.GET, context: self});
+                return this.store.get(key);
+            }
+        } else {
+            return null;
+        }
     }
 
-    // 删除制定的key
-    del(key) {
+    /**
+     * 删除制定的key
+     * @param {string | number} key
+     * @return {boolean}
+     */
+    delete(key) {
+        const self = this;
+        if (!isString(key) || !isNumber(key)) {
+            this.logger({
+                type: LOGGER_TYPE.OTHER,
+                context: self,
+                ...LoggerCode.ERROR_INPUT_KEY
+            });
+            return false
+        }
+        this.store.delete(key);
+        this.link.remove(item => item.key === key);
+        this.currentLength -= 1;
+        this.logger({type: LOGGER_TYPE.DELETE, context: self});
+        return true;
+    }
 
+    /**
+     * 是否规定超过长度
+     * @return {boolean}
+     */
+    isOverLength () {
+        return this.currentLength >= this.maxLength;
     }
 
     /**
@@ -67,7 +144,7 @@ export default class LRU {
             this.logger({
                 type: LOGGER_TYPE.OTHER,
                 context: self,
-                ...LoggerCode.ERROR_INPUT_KEY.errorCode,
+                ...LoggerCode.ERROR_INPUT_KEY,
             });
             return false;
         }
@@ -85,7 +162,7 @@ export default class LRU {
             this.logger({
                 type: LOGGER_TYPE.OTHER,
                 context: self,
-                ...LoggerCode.ERROR_INPUT_KEY.errorCode,
+                ...LoggerCode.ERROR_INPUT_KEY,
             });
             return true;
         }
@@ -130,6 +207,12 @@ export default class LRU {
      */
     forceUpdateCache(key, value) {
         if (!isString(key) || !isNumber(key)) {
+            const self = this;
+            this.logger({
+                type: LOGGER_TYPE.OTHER,
+                context: self,
+                ...LoggerCode.ERROR_INPUT_KEY,
+            });
             return false
         }
         if (!this.has(key)) {
@@ -148,9 +231,38 @@ export default class LRU {
         return true;
     }
 
-    // 重新设置该key的过期时间
-    setExpired(key) {
-
+    /**
+     * 重新设置该key的过期时间
+     * @param {string | number} key
+     * @param {number} expiredTime
+     * @return {boolean}
+     */
+    setExpiredTime(key, expiredTime) {
+        if (!isString(key) || !isNumber(key)) {
+            const self = this;
+            this.logger({
+                type: LOGGER_TYPE.OTHER,
+                context: self,
+                ...LoggerCode.ERROR_INPUT_KEY,
+            });
+            return false
+        }
+        if (!isNumber(time)) {
+            const self = this;
+            this.logger({
+                type: LOGGER_TYPE.OTHER,
+                context: self,
+                ...LoggerCode.ERROR_EXPIRED_TIME,
+            });
+            return false
+        }
+        this.link.map(item => {
+            if (item.key === key) {
+                item.expiredTime = expiredTime;
+            }
+            return item;
+        });
+        return true;
     }
 
     // 重置
@@ -164,9 +276,24 @@ export default class LRU {
         }
     }
 
-    // 更新缓存的内容，将过期的内容去掉
+    /**
+     * 更新缓存的内容，将过期的内容去掉
+     * @return {boolean}
+     */
     refresh() {
-
+        const expiredCacheKey = [];
+        const currentTime = Date.now();
+        this.link.forEach(item => {
+            if (currentTime > item.expiredTime + item.currentTime) {
+                expiredCacheKey.push(item.key);
+                this.store.delete(item.key);
+                this.currentLength -= 1;
+            }
+        });
+        expiredCacheKey.forEach(key => {
+            this.link.remove(item => item.key === key);
+        });
+        return true;
     }
 
     // 获取长度
@@ -180,5 +307,4 @@ function CacheItem(options) {
     this.value = options.value;
     this.currentTime = Date.now();
     this.expiredTime = options.expiredTime;
-    this.extraMsg = options.extraMsg;
 }
