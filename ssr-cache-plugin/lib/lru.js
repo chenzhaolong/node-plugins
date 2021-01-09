@@ -26,15 +26,13 @@ export default class LRU {
             length = MAX_LENGTH, // 最多容纳多少个
             maxSize = MAX_SIZE, // 最大容量
             maxAge = MAX_AGE, // 最大过期时间
-            onBeforeClean = () => {}, // 删除某个内存项之前触发的回调
-            onAfterExpired = () => {}, // 某项再过期之后删除之前的回调
+            onBeforeDelete = () => {}, // 删除某个内存项之前触发的回调
             logger = () => {}, // 日志函数
         } = options;
         this.maxLength = length;
         this.maxSize = maxSize;
         this.maxAge = maxAge;
-        this.onBeforeClean = onBeforeClean;
-        this.onAfterExpired = onAfterExpired;
+        this.onBeforeDelete = onBeforeDelete;
         this.logger = logger;
         this.reset();
     }
@@ -53,7 +51,7 @@ export default class LRU {
             const tail = this.link.pop();
             tail && this.store.delete(tail.value.key);
         }
-        const cache = new CacheItem({key, value, expired, extraMsg});
+        const cache = new CacheItem({key, value, expired});
         this.store.set(key, value);
         if (this.has(key)) {
             this.link.remove(item => item.key === key);
@@ -118,6 +116,7 @@ export default class LRU {
             });
             return false
         }
+        this.onBeforeDelete();
         this.store.delete(key);
         this.link.remove(item => item.key === key);
         this.currentLength -= 1;
