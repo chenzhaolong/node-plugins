@@ -5,7 +5,7 @@ import DoubleLink from '../lib/doubleLink'
 const chai = require('chai');
 
 const expect = chai.expect;
-describe('test.sh doubleLink', function() {
+describe('test doubleLink', function() {
     it('test the double link', () => {
         const nodeList = new DoubleLink(1);
         nodeList.unshift(2);
