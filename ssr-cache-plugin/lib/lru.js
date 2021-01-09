@@ -11,6 +11,15 @@ const MAX_LENGTH = 10 * 1000;
 const MAX_SIZE = Math.ceil(OS.freemem() / 8);
 const MAX_AGE = 60 * 1000;
 
+const LOGGER_TYPE = {
+    SAVE: 'save', // 保存
+    GET: 'get', // 获取
+    DELETE: 'delete', // 删除
+    EXPIRED_DELETE: 'expired_delete', // 过期删除
+    RESET: 'reset', // 重置
+    OTHER: 'other' // 其他情况
+};
+
 export default class LRU {
     constructor(options) {
         const {
@@ -30,10 +39,6 @@ export default class LRU {
         this.reset();
     }
 
-    /**
-     * 对外暴露的方法
-     */
-
     // 保存内容
     save(options) {
         // const {key, value, expired = this.maxAge, extraMsg = {}} = options;
@@ -51,12 +56,16 @@ export default class LRU {
 
     }
 
-    // 是否含有该key的缓存
+    /**
+     * 是否含有该key的缓存
+     * @param {string | number} key
+     * @return {boolean}
+     */
     has(key) {
         if (!isString(key) || !isNumber(key)) {
             const self = this;
             this.logger({
-                type: 'other',
+                type: LOGGER_TYPE.OTHER,
                 context: self,
                 ...LoggerCode.ERROR_INPUT_KEY.errorCode,
             });
@@ -65,12 +74,16 @@ export default class LRU {
         return this.store.has(key);
     }
 
-    // 该key是否过期
+    /**
+     * 该key是否过期
+     * @param {string | number} key
+     * @return {boolean}
+     */
     isExpired(key) {
         if (!isString(key) || !isNumber(key)) {
             const self = this;
             this.logger({
-                type: 'other',
+                type: LOGGER_TYPE.OTHER,
                 context: self,
                 ...LoggerCode.ERROR_INPUT_KEY.errorCode,
             });
@@ -83,19 +96,56 @@ export default class LRU {
         return Date.now() > node.value.currentTime + node.value.expiredTime;
     }
 
-    // 返回所有缓存的内容，用数组表示；
+    /**
+     * 返回所有缓存的内容，用数组表示；
+     * @return {Array}
+     */
     getValues() {
-
+        const iterator = this.store.values();
+        const array = [];
+        for (let value of iterator) {
+            array.push(value);
+        }
+        return array;
     }
 
-    // 返回手游keys，用数组表示
+    /**
+     * 返回手游keys，用数组表示
+     * @return {Array}
+     */
     getKeys() {
-
+        const iterator = this.store.keys();
+        const array = [];
+        for (let key of iterator) {
+            array.push(key);
+        }
+        return array;
     }
 
-    // 根据该key代替原来的值
-    replaceValue(key) {
-
+    /**
+     * 在缓存期内强制更新该key对应的值
+     * @param {string | number} key
+     * @param {any} value
+     * @return {boolean}
+     */
+    forceUpdateCache(key, value) {
+        if (!isString(key) || !isNumber(key)) {
+            return false
+        }
+        if (!this.has(key)) {
+            return false
+        }
+        if (this.isExpired(key)) {
+            return false
+        }
+        this.store.set(key, value);
+        this.link.map(item => {
+            if (item.key === key) {
+                item.value = value;
+            }
+            return item;
+        });
+        return true;
     }
 
     // 重新设置该key的过期时间
@@ -110,7 +160,7 @@ export default class LRU {
         this.link = new DoubleLink(); // 管理和排序
         if (showLog) {
             const self = this;
-            this.logger({type: 'reset', context: self});
+            this.logger({type: LOGGER_TYPE.RESET, context: self});
         }
     }
 
