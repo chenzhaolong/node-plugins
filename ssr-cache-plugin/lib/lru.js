@@ -37,6 +37,20 @@ export default class LRU {
         this.reset();
     }
 
+    _inputIsEffective(key) {
+        if (isString(key) || isNumber(key)) {
+            return true
+        } else {
+            const self = this;
+            this.logger({
+                type: LOGGER_TYPE.OTHER,
+                context: self,
+                // ...LoggerCode.ERROR_INPUT_KEY
+            });
+            return false
+        }
+    }
+
     /**
      * 保存内容
      * @param {object} options
@@ -52,12 +66,13 @@ export default class LRU {
             tail && this.store.delete(tail.value.key);
         }
         const cache = new CacheItem({key, value, expired});
-        this.store.set(key, value);
         if (this.has(key)) {
+            this.store.set(key, value);
             this.link.remove(item => item.key === key);
             this.link.unshift(cache);
             this.logger({type: LOGGER_TYPE.UPDATE, context: self});
         } else {
+            this.store.set(key, value);
             this.link.unshift(cache);
             this.currentLength += 1;
             this.logger({type: LOGGER_TYPE.SAVE, context: self});
@@ -72,12 +87,7 @@ export default class LRU {
      */
     get(key) {
         const self = this;
-        if (!isString(key) || !isNumber(key)) {
-            this.logger({
-                type: LOGGER_TYPE.OTHER,
-                context: self,
-                ...LoggerCode.ERROR_INPUT_KEY
-            });
+        if (!this._inputIsEffective(key)) {
             return null
         }
         if (this.has(key)) {
@@ -108,12 +118,7 @@ export default class LRU {
      */
     delete(key) {
         const self = this;
-        if (!isString(key) || !isNumber(key)) {
-            this.logger({
-                type: LOGGER_TYPE.OTHER,
-                context: self,
-                ...LoggerCode.ERROR_INPUT_KEY
-            });
+        if (!this._inputIsEffective(key)) {
             return false
         }
         this.onBeforeDelete();
@@ -138,13 +143,7 @@ export default class LRU {
      * @return {boolean}
      */
     has(key) {
-        if (!isString(key) || !isNumber(key)) {
-            const self = this;
-            this.logger({
-                type: LOGGER_TYPE.OTHER,
-                context: self,
-                ...LoggerCode.ERROR_INPUT_KEY,
-            });
+        if (!this._inputIsEffective(key)) {
             return false;
         }
         return this.store.has(key);
@@ -156,13 +155,7 @@ export default class LRU {
      * @return {boolean}
      */
     isExpired(key) {
-        if (!isString(key) || !isNumber(key)) {
-            const self = this;
-            this.logger({
-                type: LOGGER_TYPE.OTHER,
-                context: self,
-                ...LoggerCode.ERROR_INPUT_KEY,
-            });
+        if (!this._inputIsEffective(key)) {
             return true;
         }
         if (!this.has(key)) {
@@ -205,13 +198,7 @@ export default class LRU {
      * @return {boolean}
      */
     forceUpdateCache(key, value) {
-        if (!isString(key) || !isNumber(key)) {
-            const self = this;
-            this.logger({
-                type: LOGGER_TYPE.OTHER,
-                context: self,
-                ...LoggerCode.ERROR_INPUT_KEY,
-            });
+        if (!this._inputIsEffective(key)) {
             return false
         }
         if (!this.has(key)) {
@@ -237,13 +224,7 @@ export default class LRU {
      * @return {boolean}
      */
     setExpiredTime(key, expiredTime) {
-        if (!isString(key) || !isNumber(key)) {
-            const self = this;
-            this.logger({
-                type: LOGGER_TYPE.OTHER,
-                context: self,
-                ...LoggerCode.ERROR_INPUT_KEY,
-            });
+        if (!this._inputIsEffective(key)) {
             return false
         }
         if (!isNumber(time)) {
@@ -251,7 +232,7 @@ export default class LRU {
             this.logger({
                 type: LOGGER_TYPE.OTHER,
                 context: self,
-                ...LoggerCode.ERROR_EXPIRED_TIME,
+                // ...LoggerCode.ERROR_EXPIRED_TIME,
             });
             return false
         }
@@ -305,5 +286,5 @@ function CacheItem(options) {
     this.key = options.key;
     this.value = options.value;
     this.currentTime = Date.now();
-    this.expiredTime = options.expiredTime;
+    this.expiredTime = options.expired;
 }
