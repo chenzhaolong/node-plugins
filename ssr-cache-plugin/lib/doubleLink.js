@@ -199,6 +199,7 @@ export default class DoubleLink {
     }
 
     /**
+     * todo：优化
      * 删除制定的key
      * @param {String | Function} val
      * @return {ListNode}
