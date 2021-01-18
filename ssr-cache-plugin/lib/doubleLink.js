@@ -213,8 +213,24 @@ export default class DoubleLink {
         } else {
             const prev = current.prev;
             const next = current.next;
-            prev.next = next;
-            next.prev = prev;
+            if (isNull(prev)) {
+                next.prev = null;
+                if (this.length === 2) {
+                    this.head = this.tail = next;
+                } else {
+                    this.head = next;
+                }
+            } else if (isNull(next)) {
+                prev.next = null;
+                if (this.length === 2) {
+                    this.head = this.tail = prev;
+                } else {
+                    this.tail = prev;
+                }
+            } else {
+                prev.next = next;
+                next.prev = prev;
+            }
             current.prev = null;
             current.next = null;
         }
