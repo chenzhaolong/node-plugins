@@ -255,5 +255,21 @@ describe('test lru', function() {
         })
     });
 
-    
+    describe('test the cache can update', () => {
+        const keys = {
+            a1: 'a1',
+            a2: 'a2',
+            a3: 'a3',
+            a4: 'a4',
+            a5: 'a5'
+        };
+
+        it('test the value can update when the key is exist', () => {});
+
+        it('test the value can update when the key is not expired', () => {});
+
+        it('test the value can update when the key is expired', () => {});
+
+        it('test the value can update when the key is deleted', () => {});
+    })
 });
