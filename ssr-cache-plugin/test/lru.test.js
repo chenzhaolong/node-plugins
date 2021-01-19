@@ -66,6 +66,7 @@ describe('test lru', function() {
 
     describe('test expiredTime of lru', () => {
         const lru = new LRU({length: 5, maxAge: 1000});
+        const lru1 = new LRU({length: 3, maxAge: 1000});
         const keys = {
             a1: 'a1',
             a2: 'a2',
@@ -122,6 +123,33 @@ describe('test lru', function() {
                 expect(res3).to.deep.equal(['a5', 'a4']);
             }, 3000);
         });
+
+        it('test the key is expired when the container is out of full', () => {
+            lru1.save({key: keys.a1, value: 10});
+            lru1.save({key: keys.a2, value: 101});
+            lru1.save({key: keys.a3, value: 103});
+
+            setTimeout(() => {
+                lru1.save({key: keys.a4, value: 104});
+                const result = lru1.link.toArray().map(item => item.key);
+                expect(result).to.deep.equal(['a4', 'a3', 'a2']);
+            }, 1200);
+
+            setTimeout(() => {
+                const result = lru1.get(keys.a2);
+                expect(result).to.equal(null);
+                const length = lru1.length();
+                expect(length).to.equal(2);
+            }, 1300);
+
+            setTimeout(() => {
+                lru1.save({key: keys.a3, value: 111});
+                const result = lru1.get(keys.a3);
+                expect(result).to.equal(111);
+                const array = lru1.getKeys(true);
+                expect(array).to.deep.equal(['a3', 'a4']);
+            }, 1500)
+        })
     });
 
     // describe('test the key is exist', () => {})

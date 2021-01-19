@@ -167,9 +167,14 @@ export default class LRU {
 
     /**
      * 返回所有缓存的内容，用数组表示；
+     * @param {boolean} isRank 是否输出排序好的key数组
      * @return {Array}
      */
-    getValues() {
+    getValues(isRank = false) {
+        if (isRank) {
+            const array = this.link.toArray();
+            return array.map(item => item.value);
+        }
         const iterator = this.store.values();
         const array = [];
         for (let value of iterator) {
@@ -180,9 +185,14 @@ export default class LRU {
 
     /**
      * 返回手游keys，用数组表示
+     * @param {boolean} isRank 是否输出排序好的key数组
      * @return {Array}
      */
-    getKeys() {
+    getKeys(isRank = false) {
+        if (isRank) {
+            const array = this.link.toArray();
+            return array.map(item => item.key);
+        }
         const iterator = this.store.keys();
         const array = [];
         for (let key of iterator) {
