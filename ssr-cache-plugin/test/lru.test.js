@@ -6,13 +6,15 @@ const chai = require('chai');
 
 const expect = chai.expect;
 describe('test lru', function() {
-    it('test create the instance of lru', () => {
-        const lru = new LRU({length: 2});
-        const key = 'a1';
-        const isSave = lru.save({key: key, value: 12});
-        const result = lru.get(key);
-        expect(result).to.equal(12);
-        expect(isSave).to.be.true;
+    describe('test lru can run', () => {
+        it('test create the instance of lru', () => {
+            const lru = new LRU({length: 2});
+            const key = 'a1';
+            const isSave = lru.save({key: key, value: 12});
+            const result = lru.get(key);
+            expect(result).to.equal(12);
+            expect(isSave).to.be.true;
+        });
     });
 
     describe('test the rank of lru', () => {
@@ -152,5 +154,106 @@ describe('test lru', function() {
         })
     });
 
-    // describe('test the key is exist', () => {})
+    describe('test the maxAge and expired', () => {
+        const lru = new LRU({length: 3, maxAge: 1000});
+        const keys = {
+            a1: 'a1',
+            a2: 'a2',
+            a3: 'a3',
+            a4: 'a4',
+            a5: 'a5',
+            a6: 'a6',
+            a7: 'a7',
+        };
+
+        it('test the key is expired when save key used expired', () => {
+            lru.save({key: keys.a1, value: 1});
+            lru.save({key: keys.a2, value: 2, expired: 400});
+            lru.save({key: keys.a3, value: 3});
+
+            setTimeout(() => {
+                const res1 = lru.get(keys.a1);
+                const res2 = lru.get(keys.a2);
+                expect(res1).to.equal(1);
+                expect(res2).to.equal(2);
+            }, 300);
+
+            setTimeout(() => {
+                const res1 = lru.get(keys.a1);
+                const res2 = lru.get(keys.a2);
+                expect(res1).to.equal(1);
+                expect(res2).to.equal(null);
+            }, 800);
+        });
+    });
+
+    describe('test the expireTime can modify', () => {
+        const keys = {
+            a1: 'a1',
+            a2: 'a2',
+            a3: 'a3',
+            a4: 'a4',
+            a5: 'a5'
+        };
+
+        it('test the key can modify when the key is not expired', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122, expired: 500});
+            lru.save({key: keys.a3, value: 123, expired: 500});
+
+            setTimeout(() => {
+                lru.setExpiredTime(keys.a2, 700);
+            }, 300);
+
+            setTimeout(() => {
+                const res1 = lru.get(keys.a2);
+                const res2 = lru.get(keys.a3);
+                expect(res1).to.equal(122);
+                expect(res2).to.equal(null);
+            }, 600)
+        });
+
+        it('test the key can modify when the key is expired', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122, expired: 500});
+            lru.save({key: keys.a3, value: 123, expired: 500});
+
+            setTimeout(() => {
+                lru.setExpiredTime(keys.a2, 800);
+            }, 600);
+
+            setTimeout(() => {
+                const res1 = lru.get(keys.a2);
+                const res2 = lru.get(keys.a3);
+                expect(res1).to.equal(122);
+                expect(res2).to.equal(null);
+            }, 700)
+        });
+
+        it('test the key can not modify when the key is deleted', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122, expired: 500});
+            lru.save({key: keys.a3, value: 123, expired: 500});
+
+            setTimeout(() => {
+                const res = lru.get(keys.a2);
+                expect(res).to.equal(null);
+            }, 600);
+
+            setTimeout(() => {
+                const res = lru.setExpiredTime(keys.a2, 1000);
+                expect(res).to.equal(false);
+            }, 605);
+
+            setTimeout(() => {
+                const res = lru.get(keys.a2);
+                expect(res).to.equal(null);
+            }, 1000);
+        })
+    });
+
+    
 });

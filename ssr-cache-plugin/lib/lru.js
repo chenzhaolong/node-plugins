@@ -234,25 +234,18 @@ export default class LRU {
      * @return {boolean}
      */
     setExpiredTime(key, expiredTime) {
-        if (!this._inputIsEffective(key)) {
+        if (!this._inputIsEffective(key) || !this._inputIsEffective(expiredTime)) {
             return false
         }
-        if (!isNumber(time)) {
-            const self = this;
-            this.logger({
-                type: LOGGER_TYPE.OTHER,
-                context: self,
-                // ...LoggerCode.ERROR_EXPIRED_TIME,
-            });
-            return false
-        }
+        let canModify = false;
         this.link.map(item => {
             if (item.key === key) {
                 item.expiredTime = expiredTime;
+                canModify = true;
             }
             return item;
         });
-        return true;
+        return canModify;
     }
 
     // 重置
