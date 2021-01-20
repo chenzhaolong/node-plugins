@@ -270,7 +270,7 @@ export default class DoubleLink {
     forEach (callback) {
         let node = this.head;
         for (let i = 0; i < this.length; i++) {
-            node.value = isFunction(callback) ? callback(node.value, i) : node.value;
+            isFunction(callback) && callback(node.value, i);
             node = node.next;
         }
     }

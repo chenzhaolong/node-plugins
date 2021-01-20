@@ -261,7 +261,6 @@ export default class LRU {
 
     /**
      * 更新缓存的内容，将过期的内容去掉
-     * @return {boolean}
      */
     refresh() {
         const expiredCacheKey = [];
@@ -276,7 +275,6 @@ export default class LRU {
         expiredCacheKey.forEach(key => {
             this.link.remove(item => item.key === key);
         });
-        return true;
     }
 
     // 获取长度

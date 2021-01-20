@@ -264,12 +264,142 @@ describe('test lru', function() {
             a5: 'a5'
         };
 
-        it('test the value can update when the key is exist', () => {});
+        it('test the value can update when the key is exist and not expired', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122, expired: 500});
+            lru.save({key: keys.a3, value: 123, expired: 500});
 
-        it('test the value can update when the key is not expired', () => {});
+            setTimeout(() => {
+                const res = lru.get(keys.a2);
+                expect(res).to.equal(122);
+            }, 100);
 
-        it('test the value can update when the key is expired', () => {});
+            setTimeout(() => {
+                const res1 = lru.forceUpdateCache(keys.a2, 200);
+                expect(res1).to.equal(true);
+            }, 200);
 
-        it('test the value can update when the key is deleted', () => {});
-    })
+            setTimeout(() => {
+                const res = lru.get(keys.a2);
+                expect(res).to.equal(200);
+                const value = lru.getValues(true);
+                expect(value).to.deep.equal([200, 123, 12]);
+            }, 400);
+        });
+
+        it('test the value can update when the key is exist and expired', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122, expired: 500});
+            lru.save({key: keys.a3, value: 123, expired: 500});
+
+            setTimeout(() => {
+                const res = lru.get(keys.a2);
+                expect(res).to.equal(122);
+            }, 100);
+
+            setTimeout(() => {
+                const res1 = lru.forceUpdateCache(keys.a2, 200);
+                expect(res1).to.equal(false);
+            }, 700);
+
+            setTimeout(() => {
+                const res = lru.get(keys.a2);
+                expect(res).to.equal(null);
+                const value = lru.getValues(true);
+                expect(value).to.deep.equal([123, 12]);
+            }, 800);
+        });
+
+        it('test the value can update when the key is deleted', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122, expired: 500});
+            lru.save({key: keys.a3, value: 123, expired: 500});
+
+            setTimeout(() => {
+                const res = lru.get(keys.a2);
+                expect(res).to.equal(122);
+            }, 100);
+
+            setTimeout(() => {
+                const res1 = lru.get(keys.a2);
+                expect(res1).to.equal(null);
+            }, 700);
+
+            setTimeout(() => {
+                const res2 = lru.forceUpdateCache(keys.a2, 200);
+                expect(res2).to.equal(false);
+            }, 800);
+        });
+    });
+
+    describe('test the cache refresh', () => {
+        const keys = {
+            a1: 'a1',
+            a2: 'a2',
+            a3: 'a3',
+            a4: 'a4',
+            a5: 'a5'
+        };
+
+        it('test the cache refresh when all keys is not expired', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122, expired: 500});
+            lru.save({key: keys.a3, value: 123, expired: 700});
+
+            setTimeout(() => {
+                lru.refresh();
+                const res = lru.getKeys(true);
+                expect(res).to.deep.equal([keys.a3, keys.a2, keys.a1]);
+            }, 300);
+
+            setTimeout(() => {
+                lru.save({key: keys.a5, value: 123, expired: 700});
+                lru.refresh();
+                const res = lru.getKeys(true);
+                expect(res).to.deep.equal([keys.a5, keys.a3, keys.a2]);
+            }, 400)
+        });
+
+        it('test the cache refresh when some keys is not expired', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122, expired: 500});
+            lru.save({key: keys.a3, value: 123, expired: 700});
+
+            setTimeout(() => {
+                lru.refresh();
+                const res = lru.getKeys(true);
+                expect(res).to.deep.equal([keys.a3, keys.a2, keys.a1]);
+            }, 400);
+
+            setTimeout(() => {
+                lru.refresh();
+                const res = lru.getKeys(true);
+                expect(res).to.deep.equal([keys.a3, keys.a1]);
+            }, 600)
+
+            setTimeout(() => {
+                lru.refresh();
+                const res = lru.getKeys(true);
+                expect(res).to.deep.equal([keys.a1]);
+            }, 800)
+        });
+
+        it('test the cache refresh when all keys is expired', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122, expired: 500});
+            lru.save({key: keys.a3, value: 123, expired: 700});
+
+            setTimeout(() => {
+                lru.refresh();
+                const res = lru.getKeys(true);
+                expect(res).to.deep.equal([]);
+            }, 1100)
+        })
+    });
 });
