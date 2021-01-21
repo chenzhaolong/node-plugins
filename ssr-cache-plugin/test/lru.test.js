@@ -380,7 +380,7 @@ describe('test lru', function() {
                 lru.refresh();
                 const res = lru.getKeys(true);
                 expect(res).to.deep.equal([keys.a3, keys.a1]);
-            }, 600)
+            }, 600);
 
             setTimeout(() => {
                 lru.refresh();
@@ -401,5 +401,53 @@ describe('test lru', function() {
                 expect(res).to.deep.equal([]);
             }, 1100)
         })
+    });
+
+    describe('test the delete', () => {
+        const keys = {
+            a1: 'a1',
+            a2: 'a2',
+            a3: 'a3',
+            a4: 'a4',
+            a5: 'a5'
+        };
+        it('test lru delete', () => {
+            const lru = new LRU({length: 3, maxAge: 1000});
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122});
+            lru.save({key: keys.a3, value: 123});
+
+            setTimeout(() => {
+                lru.delete(keys.a2);
+            }, 100);
+
+            setTimeout(() => {
+                const res = lru.get(keys.a2);
+                const array = lru.getKeys(true);
+                expect(res).to.equal(null);
+                expect(array).to.deep.equal(['a3', 'a1']);
+            }, 500)
+        });
+
+        it('test the onBeforeDelete action when delete', () => {
+            const lru = new LRU({
+                length: 3,
+                maxAge: 1000,
+                onBeforeDelete: () => {
+                    lru.save({key: 'an', value: 1});
+                }
+            });
+            lru.save({key: keys.a1, value: 12});
+            lru.save({key: keys.a2, value: 122});
+            lru.save({key: keys.a3, value: 123});
+
+            setTimeout(() => {
+                lru.delete(keys.a1);
+                const res = lru.get(keys.a1);
+                const array = lru.getKeys(true);
+                expect(res).to.equal(null);
+                expect(array).to.deep.equal(['an', 'a3', 'a2']);
+            }, 1000)
+        });
     });
 });
