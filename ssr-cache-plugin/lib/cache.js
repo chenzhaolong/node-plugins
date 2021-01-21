@@ -31,4 +31,16 @@ export default class Cache {
         this.onUpgrade = onUpgrade;
         this.onDemotion = onDemotion;
     }
+
+    save (options) {
+
+    }
+
+    get(options) {
+
+    }
+
+    delete(key) {
+        
+    }
 }
