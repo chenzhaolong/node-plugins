@@ -11,6 +11,19 @@ const HF_MAX_AGE = 60 * 1000;
 const LF_MAX_AGE = 60 * 1000;
 const HF_TIMES = 10;
 
+const TYPE = {
+  LF: 'lf', // 低频
+  HF: 'hf' // 高频
+};
+
+const LOGGER_TYPE = {
+  SAVE: 'save',
+  GET: 'get',
+  RESET: 'reset',
+  DELETE: 'delete',
+  OTHER: 'other'
+};
+
 export default class Cache {
     constructor(options) {
         const {
@@ -32,15 +45,112 @@ export default class Cache {
         this.onDemotion = onDemotion;
     }
 
+    /**
+     * 保存数据
+     */
     save (options) {
 
     }
 
+    /**
+     * 获取数据
+     */
     get(options) {
 
     }
 
+    /**
+     * 删除数据
+     */
     delete(key) {
-        
+
+    }
+
+    /**
+     * 获取lru的key值
+     */
+    getKeys(type) {
+
+    }
+
+    /**
+     * 获取lru的value值
+     */
+    getValues(key) {
+
+    }
+
+    /**
+     * 是否能升级
+     */
+    _canUpgrade(key) {
+
+    }
+
+    /**
+     * 是否能降级
+     */
+    _canDemotion(key) {
+
+    }
+
+    /**
+     * 停止存入
+     */
+    _stopSave(type) {
+
+    }
+
+    /**
+     * 恢复存入
+     */
+    restoreSave(type) {
+
+    }
+
+    /**
+     * 升级
+     */
+    _uograde(key) {
+
+    }
+
+    /**
+     * 降级
+     */
+    _demotion(key) {
+
+    }
+
+    _logger(type) {
+
+    }
+
+    /**
+     * 是否过期
+     */
+    _isExpired(key, type) {
+
+    }
+
+    /**
+     * 是否有key
+     */
+    _has(key, type) {
+
+    }
+
+    /**
+     * 是否已满
+     */
+    _isOverLength(type) {
+
+    }
+
+    /**
+     * 重置
+     */
+    _reset() {
+
     }
 }
