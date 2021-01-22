@@ -4,6 +4,7 @@
  */
 import LRU from './lru';
 import Monitor from './monitor';
+const path = require('path');
 
 const HF_MAX_LENGTH = 10 * 1000;
 const LF_MAX_LENGTH = 10 * 1000;
@@ -21,7 +22,8 @@ const LOGGER_TYPE = {
   GET: 'get',
   RESET: 'reset',
   DELETE: 'delete',
-  OTHER: 'other'
+  OTHER: 'other',
+  WARN: 'warn'
 };
 
 export default class Cache {
@@ -35,7 +37,10 @@ export default class Cache {
             onBeforeDelete = () => {},
             onUpgrade = () => {},
             onDemotion = () => {},
-            onLogger = () => {} // 待定
+            onLogger = () => {}, // 日志
+            onWarning = () => {}, // 警告函数
+            openMonitor = true, // 是否开启内存监控
+            memFilePath = path.resolve(__dirname, '../menFile/') // 溢出文件的存储位置
         } = options;
 
         this.LFLru = new LRU({length: LFLength, maxAge: LFMaxAge, onBeforeDelete});
@@ -43,6 +48,12 @@ export default class Cache {
         this.frequency = HFTimes;
         this.onUpgrade = onUpgrade;
         this.onDemotion = onDemotion;
+        Monitor.injectExtraPower({
+            onWarning, openMonitor, memFilePath,
+            logger: (msg) => {
+                this._logger(LOGGER_TYPE.WARN, msg);
+            }
+        });
     }
 
     /**
@@ -122,7 +133,7 @@ export default class Cache {
 
     }
 
-    _logger(type) {
+    _logger(type, msg) {
 
     }
 
