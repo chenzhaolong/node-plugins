@@ -14,7 +14,8 @@ const HF_TIMES = 10;
 
 const TYPE = {
   LF: 'lf', // 低频
-  HF: 'hf' // 高频
+  HF: 'hf', // 高频
+  BOTH: 'both' // 两者
 };
 
 const LOGGER_TYPE = {
@@ -48,6 +49,7 @@ export default class Cache {
         this.frequency = HFTimes;
         this.onUpgrade = onUpgrade;
         this.onDemotion = onDemotion;
+
         Monitor.injectExtraPower({
             onWarning, openMonitor, memFilePath,
             logger: (msg) => {
@@ -148,7 +150,16 @@ export default class Cache {
      * 是否有key
      */
     _has(key, type) {
-
+        switch (type) {
+            case TYPE.BOTH:
+                return this.LFLru.has(key) && this.HFLru.has(key);
+            case TYPE.HF:
+                return this.HFLru.has(key);
+            case TYPE.LF:
+                return this.LFLru.has(key);
+            default:
+                return false;
+        }
     }
 
     /**
@@ -161,7 +172,20 @@ export default class Cache {
     /**
      * 重置
      */
-    _reset() {
-
+    _reset(type) {
+        switch (type) {
+            case TYPE.BOTH:
+                this.LFLru.reset();
+                this.HFLru.reset();
+                break;
+            case TYPE.HF:
+                this.HFLru.reset();
+                break;
+            case TYPE.LF:
+                this.LFLru.reset();
+                break;
+            default:
+                break;
+        }
     }
 }
