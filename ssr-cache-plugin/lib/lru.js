@@ -57,7 +57,7 @@ export default class LRU {
      * @return {boolean}
      */
     save(options) {
-        const {key, value, expired = this.maxAge} = options;
+        const {key, value, expired = this.maxAge, extra = ''} = options;
         const self = this;
         // key不存在且已经到达长度
         if (!this.has(key) && this.isOverLength()) {
@@ -65,7 +65,7 @@ export default class LRU {
             const tail = this.link.pop();
             tail && this.store.delete(tail.value.key);
         }
-        const cache = new CacheItem({key, value, expired});
+        const cache = new CacheItem({key, value, expired, extra});
         if (this.has(key)) {
             this.store.set(key, value);
             this.link.remove(item => item.key === key);
@@ -288,4 +288,7 @@ function CacheItem(options) {
     this.value = options.value;
     this.currentTime = Date.now();
     this.expiredTime = options.expired;
+    if (options.extra) {
+        this.extra = options.extra;
+    }
 }

@@ -142,31 +142,29 @@ export default class Cache {
     /**
      * 是否过期
      */
-    _isExpired(key, type) {
-
+    _isExpired(key) {
     }
 
     /**
      * 是否有key
      */
-    _has(key, type) {
-        switch (type) {
-            case TYPE.BOTH:
-                return this.LFLru.has(key) && this.HFLru.has(key);
-            case TYPE.HF:
-                return this.HFLru.has(key);
-            case TYPE.LF:
-                return this.LFLru.has(key);
-            default:
-                return false;
-        }
+    _has(key) {
     }
 
     /**
      * 是否已满
      */
     _isOverLength(type) {
-
+        switch (type) {
+            case TYPE.BOTH:
+                return this.LFLru.isOverLength() && this.HFLru.isOverLength();
+            case TYPE.HF:
+                return this.HFLru.isOverLength();
+            case TYPE.LF:
+                return this.LFLru.isOverLength();
+            default:
+                return false;
+        }
     }
 
     /**
