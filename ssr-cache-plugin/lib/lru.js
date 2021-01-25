@@ -114,19 +114,18 @@ export default class LRU {
     /**
      * 删除制定的key
      * @param {string | number} key
-     * @return {boolean}
+     * @return {ListNode}
      */
     delete(key) {
         const self = this;
         if (!this._inputIsEffective(key)) {
-            return false
+            return null
         }
         this.onBeforeDelete();
         this.store.delete(key);
-        this.link.remove(item => item.key === key);
         this.currentLength -= 1;
         this.logger({type: LOGGER_TYPE.DELETE, context: self});
-        return true;
+        return this.link.remove(item => item.key === key);
     }
 
     /**

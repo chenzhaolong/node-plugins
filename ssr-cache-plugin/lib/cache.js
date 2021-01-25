@@ -107,16 +107,25 @@ export default class Cache {
      * @return boolean
      */
     _canUpgrade(node) {
-        const {times = 0} = node.extra;
+        const {times = 0} = node.value.extra;
         return times >= this.frequency;
     }
 
     /**
      * 升级
-     *
+     * @param {Object} node
      */
     _uograde(node) {
-
+        // 删除LF的key节点
+        this.LFLru.delete(node.value.key);
+        if (this._isOverLength(TYPE.HF)) {
+            this._demotion()
+        }
+        this.HFLru.save({
+            key: node.value.key,
+            value: node.value.value,
+            expired: node.value.expired,
+        });
     }
 
     /**
@@ -124,6 +133,23 @@ export default class Cache {
      */
     _canDemotion(node) {
 
+    }
+
+    /**
+     * 降级
+     */
+    _demotion() {
+        const HFKeys = this.HFLru.getKeys(true);
+        const tail = this.HFLru.delete(HFKeys[HFKeys.length - 1]);
+        // 存在且没过期
+        if (tail && (Date.now() <= tail.value.currentTime + tail.value.expiredTime)) {
+            this.LFLru.save({
+                key: tail.value.key,
+                value: tail.value.value,
+                expired: tail.value.expired,
+                extra: {times: 0}
+            });
+        }
     }
 
     /**
@@ -137,13 +163,6 @@ export default class Cache {
      * 恢复存入
      */
     restoreSave(type) {
-
-    }
-
-    /**
-     * 降级
-     */
-    _demotion(key) {
 
     }
 
