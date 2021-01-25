@@ -81,29 +81,48 @@ export default class Cache {
 
     /**
      * 获取lru的key值
+     * @param {boolean} isRank 是否输出排序好的key数组
+     * @return {Object}
      */
-    getKeys(type) {
-
+    getKeys(isRank = false) {
+        const LFKeys = this.LFLru.getKeys(isRank);
+        const HFKeys = this.HFLru.getKeys(isRank);
+        return {LFKeys, HFKeys};
     }
 
     /**
      * 获取lru的value值
+     * @param {boolean} isRank 是否输出排序好的key数组
+     * @return {Object}
      */
-    getValues(key) {
-
+    getValues(isRank = false) {
+        const LFValues = this.LFLru.getValues(isRank);
+        const HFValues = this.HFLru.getValues(isRank);
+        return {LFValues, HFValues};
     }
 
     /**
      * 是否能升级
+     * @param {Object} node
+     * @return boolean
      */
-    _canUpgrade(key) {
+    _canUpgrade(node) {
+        const {times = 0} = node.extra;
+        return times >= this.frequency;
+    }
+
+    /**
+     * 升级
+     *
+     */
+    _uograde(node) {
 
     }
 
     /**
      * 是否能降级
      */
-    _canDemotion(key) {
+    _canDemotion(node) {
 
     }
 
@@ -122,13 +141,6 @@ export default class Cache {
     }
 
     /**
-     * 升级
-     */
-    _uograde(key) {
-
-    }
-
-    /**
      * 降级
      */
     _demotion(key) {
@@ -143,16 +155,34 @@ export default class Cache {
      * 是否过期
      */
     _isExpired(key) {
+        if (this.LFLru.isExpired(key)) {
+            return true;
+        } else if (this.HFLru.isExpired(key)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * 是否有key
+     * @param {string | number} key
+     * @return boolean
      */
     _has(key) {
+        if (this.LFLru.has(key)) {
+            return true
+        } else if (this.HFLru.has(key)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * 是否已满
+     * @param {string} type
+     * @return boolean
      */
     _isOverLength(type) {
         switch (type) {
@@ -169,6 +199,8 @@ export default class Cache {
 
     /**
      * 重置
+     * @param {string} type
+     * @return boolean
      */
     _reset(type) {
         switch (type) {
