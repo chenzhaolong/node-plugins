@@ -4,6 +4,7 @@
  */
 import LRU from './lru';
 import Monitor from './monitor';
+import { isNull } from 'lodash';
 const path = require('path');
 
 const HF_MAX_LENGTH = 10 * 1000;
@@ -62,21 +63,57 @@ export default class Cache {
      * 保存数据
      */
     save (options) {
-
+        return this.LFLru.save(options);
     }
 
     /**
-     * 获取数据
+     * 获取指定的key
+     * @param {string | number} key
+     * @return {any}
      */
-    get(options) {
-
+    get(key) {
+        if (!this._has(key)) {
+            return null
+        }
+        // 高频LRU存在
+        if (this._has(key, TYPE.HF)) {
+            return this.HFLru.get(key);
+        } else { // 低频LRU存在
+            this.LFLru.link.map(node => {
+                if (node.value.key === key) {
+                    node.value.extra.times += 1;
+                }
+                return node;
+            });
+            const target = this.LFLru.get(key);
+            if (isNull(target)) {
+                return null;
+            }
+            if (this._canUpgrade(target)) {
+                this._uograde(target);
+            }
+            return target;
+        }
     }
 
     /**
      * 删除数据
+     * @param {string} type
+     * @param {string | number} key
      */
-    delete(key) {
-
+    delete(type, key) {
+        switch (type) {
+            case TYPE.HF:
+                this.HFLru.delete(key);
+                break;
+            case TYPE.LF:
+                this.LFLru.delete(key);
+                break;
+            default:
+                this.HFLru.delete(key);
+                this.LFLru.delete(key);
+                break;
+        }
     }
 
     /**
@@ -126,13 +163,6 @@ export default class Cache {
             value: node.value.value,
             expired: node.value.expired,
         });
-    }
-
-    /**
-     * 是否能降级
-     */
-    _canDemotion(node) {
-
     }
 
     /**
@@ -186,15 +216,17 @@ export default class Cache {
     /**
      * 是否有key
      * @param {string | number} key
+     * @param {string} type
      * @return boolean
      */
-    _has(key) {
-        if (this.LFLru.has(key)) {
-            return true
-        } else if (this.HFLru.has(key)) {
-            return true;
-        } else {
-            return false;
+    _has(key, type) {
+        switch (type) {
+            case TYPE.HF:
+                return this.HFLru.has(key);
+            case TYPE.LF:
+                return this.LFLru.has(key);
+            default:
+                return this.HFLru.has(key) || this.LFLru.has(key);
         }
     }
 
