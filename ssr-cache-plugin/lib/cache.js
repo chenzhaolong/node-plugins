@@ -139,8 +139,8 @@ export default class Cache {
      * 降级
      */
     _demotion() {
-        const HFKeys = this.HFLru.getKeys(true);
-        const tail = this.HFLru.delete(HFKeys[HFKeys.length - 1]);
+        const tail = this.HFLru.link.tail;
+        tail && this.HFLru.delete(tail.value.keys);
         // 存在且没过期
         if (tail && (Date.now() <= tail.value.currentTime + tail.value.expiredTime)) {
             this.LFLru.save({
