@@ -1,12 +1,14 @@
 /**
  * @file 监控器
  */
+const os = require('os');
 
 export default class Monitor {
     static options = {
         warningFn: '',
         openMonitor: '',
-        memFilePath: ''
+        memFilePath: '',
+        logger: () => {}
     };
 
     static injectExtraPower (options) {
@@ -21,8 +23,8 @@ export default class Monitor {
     /**
      * 是否到达三级告警：内存使用率在60%以上
      */
-    static isArriveThreeLevel () {
-
+    static isArriveThreeLevel (mem) {
+        return mem > 60;
     }
 
     /**
@@ -35,8 +37,8 @@ export default class Monitor {
     /**
      * 是否到达二级警告：内存使用率在70%以上
      */
-    static isArriveTwoLevel () {
-
+    static isArriveTwoLevel (mem) {
+        return mem > 70;
     }
 
     /**
@@ -49,8 +51,8 @@ export default class Monitor {
     /**
      * 是否到达一级警告：内存使用率在80%以上
      */
-    static isArriveOneLevel () {
-
+    static isArriveOneLevel (mem) {
+        return mem > 80;
     }
 
     /**
@@ -58,5 +60,11 @@ export default class Monitor {
      */
     static takeActionForOneLevel () {
 
+    }
+
+    static computedMemory() {
+        const total = os.totalmem();
+        const free = os.freemem();
+        return Math.round(((total - free) / total) * 100);
     }
 }

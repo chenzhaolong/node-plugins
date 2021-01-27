@@ -4,7 +4,7 @@
  */
 import LRU from './lru';
 import Monitor from './monitor';
-import { isNull } from 'lodash';
+import { isNull, isNumber } from 'lodash';
 const path = require('path');
 
 const HF_MAX_LENGTH = 10 * 1000;
@@ -39,6 +39,7 @@ export default class Cache {
             onBeforeDelete = () => {},
             onUpgrade = () => {},
             onDemotion = () => {},
+            clearDataTime = 0, // 每个多少秒清洗lru的数据
             onLogger = () => {}, // 日志
             onWarning = () => {}, // 警告函数
             openMonitor = true, // 是否开启内存监控
@@ -50,6 +51,14 @@ export default class Cache {
         this.frequency = HFTimes;
         this.onUpgrade = onUpgrade;
         this.onDemotion = onDemotion;
+
+        // 每个多少秒更新数据一次
+        if (isNumber(clearDataTime) && clearDataTime > 0) {
+            setInterval(() => {
+                !this._isLruEmpty(TYPE.LF) && this.LFLru.refresh();
+                !this._isLruEmpty(TYPE.HF) && this.HFLru.refresh();
+            }, clearDataTime * 1000);
+        }
 
         Monitor.injectExtraPower({
             onWarning, openMonitor, memFilePath,
@@ -63,7 +72,23 @@ export default class Cache {
      * 保存数据
      */
     save (options) {
-        return this.LFLru.save(options);
+        const mem = Monitor.computedMemory();
+        if (Monitor.isArriveOneLevel(mem)) {
+            return Monitor.takeActionForOneLevel();
+        }
+
+        if (Monitor.isArriveThreeLevel(mem)) {
+            Monitor.takeActionForThreeLevel();
+        }
+
+        return this.LFLru.save({
+            key: options.key,
+            value: options.value,
+            expired: options.expired,
+            extra: {
+                times: 0
+            }
+        });
     }
 
     /**
@@ -144,6 +169,12 @@ export default class Cache {
      * @return boolean
      */
     _canUpgrade(node) {
+        const mem = Monitor.computedMemory();
+        if (Monitor.isArriveTwoLevel(mem)) {
+            Monitor.takeActionForTwoLevel();
+            return false
+        }
+
         const {times = 0} = node.value.extra;
         return times >= this.frequency;
     }
@@ -180,20 +211,6 @@ export default class Cache {
                 extra: {times: 0}
             });
         }
-    }
-
-    /**
-     * 停止存入
-     */
-    _stopSave(type) {
-
-    }
-
-    /**
-     * 恢复存入
-     */
-    restoreSave(type) {
-
     }
 
     _logger(type, msg) {
@@ -245,6 +262,19 @@ export default class Cache {
                 return this.LFLru.isOverLength();
             default:
                 return false;
+        }
+    }
+
+    /**
+     * lru是否为空
+     * @param {string} type
+     * @return {boolean}
+     */
+    _isLruEmpty(type) {
+        if (type === TYPE.LF) {
+            return this.LFLru.getKeys().length === 0;
+        } else {
+            return this.HFLru.getKeys().length === 0;
         }
     }
 
