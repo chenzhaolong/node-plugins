@@ -2,6 +2,7 @@
  * @file 监控器
  */
 const os = require('os');
+const heapdump = require('heapdump');
 
 export default class Monitor {
     static options = {
@@ -28,24 +29,10 @@ export default class Monitor {
     }
 
     /**
-     * warn触发，日志输出, 溢出内存文件输出
-     */
-    static takeActionForThreeLevel () {
-
-    }
-
-    /**
      * 是否到达二级警告：内存使用率在70%以上
      */
     static isArriveTwoLevel (mem) {
         return mem > 70;
-    }
-
-    /**
-     * warn触发，日志输出, 溢出内存文件输出, HF只出不进
-     */
-    static takeActionForTwoLevel () {
-
     }
 
     /**
@@ -60,6 +47,26 @@ export default class Monitor {
      */
     static takeActionForOneLevel () {
 
+    }
+
+    /**
+     * warn触发，日志输出, 溢出内存文件输出, HF只出不进
+     */
+    static takeActionForTwoLevel () {
+
+    }
+
+    /**
+     * warn触发，日志输出, 溢出内存文件输出
+     */
+    static takeAction (mem) {
+        const {openMonitor, memFilePath, warningFn, logger} = Monitor.options;
+        if (openMonitor) {
+            warningFn();
+            logger({type: 'warn', msg: `mem used ${mem}%`});
+            const str = (new Date()).toLocaleDateString().replace(/[\/]/g, '.');
+            heapdump.writeSnapshot(`${memFilePath}_${str}.heapsnapshot`);
+        }
     }
 
     static computedMemory() {

@@ -52,12 +52,12 @@ export default class Cache {
         this.onUpgrade = onUpgrade;
         this.onDemotion = onDemotion;
 
-        // 每个多少秒更新数据一次
+        // 每个多少分钟更新数据一次
         if (isNumber(clearDataTime) && clearDataTime > 0) {
             setInterval(() => {
                 !this._isLruEmpty(TYPE.LF) && this.LFLru.refresh();
                 !this._isLruEmpty(TYPE.HF) && this.HFLru.refresh();
-            }, clearDataTime * 1000);
+            }, clearDataTime * 1000 * 60);
         }
 
         Monitor.injectExtraPower({
@@ -74,11 +74,13 @@ export default class Cache {
     save (options) {
         const mem = Monitor.computedMemory();
         if (Monitor.isArriveOneLevel(mem)) {
-            return Monitor.takeActionForOneLevel();
+            Monitor.takeAction();
+            !this._isLruEmpty(TYPE.HF) && this.HFLru.reset();
+            return
         }
 
         if (Monitor.isArriveThreeLevel(mem)) {
-            Monitor.takeActionForThreeLevel();
+            Monitor.takeAction();
         }
 
         return this.LFLru.save({
@@ -171,7 +173,7 @@ export default class Cache {
     _canUpgrade(node) {
         const mem = Monitor.computedMemory();
         if (Monitor.isArriveTwoLevel(mem)) {
-            Monitor.takeActionForTwoLevel();
+            Monitor.takeAction();
             return false
         }
 
