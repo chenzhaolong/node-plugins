@@ -1,6 +1,10 @@
 /**
  * @file 监控器
+ * 大于60：HFL只出不进, LFL正常；
+ * 大于70：HFL清空且不能进，LFL正常;
+ * 大于80：LFL只出不进；
  */
+import { debounce } from 'lodash';
 const os = require('os');
 const heapdump = require('heapdump');
 
@@ -8,16 +12,14 @@ export default class Monitor {
     static options = {
         warningFn: '',
         openMonitor: '',
-        memFilePath: '',
-        logger: () => {}
+        memFilePath: ''
     };
 
     static injectExtraPower (options) {
         Monitor.options = {
-            warningFn: options.onWarning,
+            warningFn: options.onNoticeForOOM,
             openMonitor: options.openMonitor,
-            memFilePath: options.memFilePath,
-            logger: options.logger
+            memFilePath: options.memFilePath
         }
     }
 
@@ -25,47 +27,35 @@ export default class Monitor {
      * 是否到达三级告警：内存使用率在60%以上
      */
     static isArriveThreeLevel (mem) {
-        return mem > 60;
+        return mem >= 60 && mem < 70;
     }
 
     /**
      * 是否到达二级警告：内存使用率在70%以上
      */
     static isArriveTwoLevel (mem) {
-        return mem > 70;
+        return mem >= 70 && mem < 80;
     }
 
     /**
      * 是否到达一级警告：内存使用率在80%以上
      */
     static isArriveOneLevel (mem) {
-        return mem > 80;
+        return mem >= 80;
     }
 
     /**
-     * warn触发，日志输出, 溢出内存文件输出, LF只出不进, HF清空
-     */
-    static takeActionForOneLevel () {
-
-    }
-
-    /**
-     * warn触发，日志输出, 溢出内存文件输出, HF只出不进
-     */
-    static takeActionForTwoLevel () {
-
-    }
-
-    /**
-     * warn触发，日志输出, 溢出内存文件输出
+     * warn触发，日志输出, 溢出内存文件输出，1分钟输出一次（防抖）
      */
     static takeAction (mem) {
-        const {openMonitor, memFilePath, warningFn, logger} = Monitor.options;
+        const {openMonitor, memFilePath, warningFn} = Monitor.options;
         if (openMonitor) {
-            warningFn();
-            logger({type: 'warn', msg: `mem used ${mem}%`});
-            const str = (new Date()).toLocaleDateString().replace(/[\/]/g, '.');
-            heapdump.writeSnapshot(`${memFilePath}_${str}.heapsnapshot`);
+            const noticeFn = debounce(() => {
+                warningFn(mem);
+                const date = (new Date()).toLocaleDateString().replace(/[\/]/g, '.');
+                heapdump.writeSnapshot(`${memFilePath}/snapShot_${date}.heapsnapshot`);
+            }, 60 * 1000);
+            noticeFn();
         }
     }
 

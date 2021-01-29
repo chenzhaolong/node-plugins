@@ -1,6 +1,7 @@
 /**
  * @file 基于lru的低高频缓存策略
- * todo： logger的使用
+ * todo：logger的使用
+ * todo：对缓存的内容体积做限制
  */
 import LRU from './lru';
 import Monitor from './monitor';
@@ -25,7 +26,8 @@ const LOGGER_TYPE = {
   RESET: 'reset',
   DELETE: 'delete',
   OTHER: 'other',
-  WARN: 'warn'
+  WARN: 'warn',
+  OOM: 'outOfMemory'
 };
 
 export default class Cache {
@@ -41,7 +43,7 @@ export default class Cache {
             onDemotion = () => {},
             clearDataTime = 0, // 每个多少秒清洗lru的数据
             onLogger = () => {}, // 日志
-            onWarning = () => {}, // 警告函数
+            onNoticeForOOM = () => {}, // 警告函数
             openMonitor = true, // 是否开启内存监控
             memFilePath = path.resolve(__dirname, '../menFile/') // 溢出文件的存储位置
         } = options;
@@ -60,12 +62,7 @@ export default class Cache {
             }, clearDataTime * 1000 * 60);
         }
 
-        Monitor.injectExtraPower({
-            onWarning, openMonitor, memFilePath,
-            logger: (msg) => {
-                this._logger(LOGGER_TYPE.WARN, msg);
-            }
-        });
+        Monitor.injectExtraPower({onNoticeForOOM, openMonitor, memFilePath});
     }
 
     /**
@@ -76,11 +73,8 @@ export default class Cache {
         if (Monitor.isArriveOneLevel(mem)) {
             Monitor.takeAction();
             !this._isLruEmpty(TYPE.HF) && this.HFLru.reset();
+            this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}`, data: {mem}});
             return
-        }
-
-        if (Monitor.isArriveThreeLevel(mem)) {
-            Monitor.takeAction();
         }
 
         return this.LFLru.save({
@@ -117,7 +111,7 @@ export default class Cache {
                 return null;
             }
             if (this._canUpgrade(target)) {
-                this._uograde(target);
+                this._upgrade(target);
             }
             return target;
         }
@@ -172,8 +166,11 @@ export default class Cache {
      */
     _canUpgrade(node) {
         const mem = Monitor.computedMemory();
-        if (Monitor.isArriveTwoLevel(mem)) {
-            Monitor.takeAction();
+        if (Monitor.isArriveThreeLevel(mem) || Monitor.isArriveTwoLevel(mem)) {
+            if (Monitor.isArriveTwoLevel(mem)) {
+                !this._isLruEmpty(TYPE.HF) && this.HFLru.reset();
+            }
+            this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}`, data: {mem}});
             return false
         }
 
@@ -185,7 +182,7 @@ export default class Cache {
      * 升级
      * @param {Object} node
      */
-    _uograde(node) {
+    _upgrade(node) {
         // 删除LF的key节点
         this.LFLru.delete(node.value.key);
         if (this._isOverLength(TYPE.HF)) {
