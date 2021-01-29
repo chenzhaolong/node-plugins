@@ -11,6 +11,9 @@ while [ -n "$1" ]
         -l)
            file="lru.test.js"
            shift;;
+        -c)
+           file="cache.test.js"
+           shift;;
         *) shift;;
    esac
 done

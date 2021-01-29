@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test_d": "sh ./bin/test.sh -d",
-    "test_l": "sh ./bin/test.sh -l"
+    "test_l": "sh ./bin/test.sh -l",
+    "test_c": "sh ./bin/test.sh -c"
   },
   "keywords": [
     "ssr",
