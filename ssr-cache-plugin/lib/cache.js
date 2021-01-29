@@ -21,13 +21,13 @@ const TYPE = {
 };
 
 const LOGGER_TYPE = {
-  SAVE: 'save',
-  GET: 'get',
-  RESET: 'reset',
-  DELETE: 'delete',
-  OTHER: 'other',
-  WARN: 'warn',
-  OOM: 'outOfMemory'
+    SAVE: 'save',
+    GET: 'get',
+    RESET: 'reset',
+    DELETE: 'delete',
+    UPGRADE: 'upgrade',
+    DEMOTION: 'demotion',
+    OOM: 'outOfMemory'
 };
 
 export default class Cache {
@@ -53,6 +53,7 @@ export default class Cache {
         this.frequency = HFTimes;
         this.onUpgrade = onUpgrade;
         this.onDemotion = onDemotion;
+        this.onLogger = onLogger;
 
         // 每个多少分钟更新数据一次
         if (isNumber(clearDataTime) && clearDataTime > 0) {
@@ -72,11 +73,16 @@ export default class Cache {
         const mem = Monitor.computedMemory();
         if (Monitor.isArriveOneLevel(mem)) {
             Monitor.takeAction();
-            !this._isLruEmpty(TYPE.HF) && this.HFLru.reset();
+            !this._isLruEmpty(TYPE.HF) && this._reset(TYPE.HF);
             this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}`, data: {mem}});
             return
         }
 
+        this._logger({
+            type: LOGGER_TYPE.SAVE,
+            msg: `${options.key} saved`,
+            data: {key: options, expiredTime: options.expired}
+        });
         return this.LFLru.save({
             key: options.key,
             value: options.value,
@@ -98,8 +104,20 @@ export default class Cache {
         }
         // 高频LRU存在
         if (this._has(key, TYPE.HF)) {
+            this._logger({
+                type: LOGGER_TYPE.GET,
+                msg: `${key} get`,
+                data: {key, from: 'HFL'}
+            });
+
             return this.HFLru.get(key);
         } else { // 低频LRU存在
+            this._logger({
+                type: LOGGER_TYPE.GET,
+                msg: `${key} get`,
+                data: {key, from: 'LFL'}
+            });
+
             this.LFLru.link.map(node => {
                 if (node.value.key === key) {
                     node.value.extra.times += 1;
@@ -123,6 +141,11 @@ export default class Cache {
      * @param {string | number} key
      */
     delete(type, key) {
+        this._logger({
+            type: LOGGER_TYPE.DELETE,
+            msg: `${key} delete`,
+            data: {key, from: type}
+        });
         switch (type) {
             case TYPE.HF:
                 this.HFLru.delete(key);
@@ -168,7 +191,7 @@ export default class Cache {
         const mem = Monitor.computedMemory();
         if (Monitor.isArriveThreeLevel(mem) || Monitor.isArriveTwoLevel(mem)) {
             if (Monitor.isArriveTwoLevel(mem)) {
-                !this._isLruEmpty(TYPE.HF) && this.HFLru.reset();
+                !this._isLruEmpty(TYPE.HF) && this._reset(TYPE.HF);
             }
             this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}`, data: {mem}});
             return false
@@ -183,6 +206,12 @@ export default class Cache {
      * @param {Object} node
      */
     _upgrade(node) {
+        this._logger({
+            type: LOGGER_TYPE.UPGRADE,
+            msg: `${node.value.key} upgrade`,
+            data: {key: node.value.key, from: 'LFL', to: 'HFL'}
+        });
+
         // 删除LF的key节点
         this.LFLru.delete(node.value.key);
         if (this._isOverLength(TYPE.HF)) {
@@ -209,11 +238,19 @@ export default class Cache {
                 expired: tail.value.expired,
                 extra: {times: 0}
             });
+
+            this._logger({
+                type: LOGGER_TYPE.DEMOTION,
+                msg: `${tail.value.key} demotion`,
+                data: {key: tail.value.key, from: 'HFL', to: 'LFL'}
+            });
         }
     }
 
-    _logger(type, msg) {
-
+    _logger(options) {
+        const {type, msg, data} = options;
+        data.currentTime = Date.now();
+        this.onLogger({type, msg, data});
     }
 
     /**
@@ -283,6 +320,12 @@ export default class Cache {
      * @return boolean
      */
     _reset(type) {
+        this._logger({
+            type: LOGGER_TYPE.RESET,
+            msg: `${type} reset`,
+            data: {}
+        });
+
         switch (type) {
             case TYPE.BOTH:
                 this.LFLru.reset();
