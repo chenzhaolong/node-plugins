@@ -5,7 +5,7 @@
  */
 import LRU from './lru';
 import Monitor from './monitor';
-import { isNull, isNumber } from 'lodash';
+import { isNull, isNumber, get } from 'lodash';
 const path = require('path');
 
 const HF_MAX_LENGTH = 10 * 1000;
@@ -43,8 +43,8 @@ export default class Cache {
             onDemotion = () => {},
             clearDataTime = 0, // 每个多少秒清洗lru的数据
             onLogger = () => {}, // 日志
-            onNoticeForOOM = () => {}, // 警告函数
             openMonitor = true, // 是否开启内存监控
+            onNoticeForOOM = () => {}, // 警告函数
             memFilePath = path.resolve(__dirname, '../menFile/') // 溢出文件的存储位置
         } = options;
 
@@ -119,8 +119,8 @@ export default class Cache {
             });
 
             this.LFLru.link.map(node => {
-                if (node.value.key === key) {
-                    node.value.extra.times += 1;
+                if (node.key === key) {
+                    node.extra.times += 1;
                 }
                 return node;
             });
@@ -128,7 +128,7 @@ export default class Cache {
             if (isNull(target)) {
                 return null;
             }
-            if (this._canUpgrade(target)) {
+            if (this._canUpgrade(key)) {
                 this._upgrade(target);
             }
             return target;
@@ -184,10 +184,9 @@ export default class Cache {
 
     /**
      * 是否能升级
-     * @param {Object} node
      * @return boolean
      */
-    _canUpgrade(node) {
+    _canUpgrade() {
         const mem = Monitor.computedMemory();
         if (Monitor.isArriveThreeLevel(mem) || Monitor.isArriveTwoLevel(mem)) {
             if (Monitor.isArriveTwoLevel(mem)) {
@@ -197,7 +196,8 @@ export default class Cache {
             return false
         }
 
-        const {times = 0} = node.value.extra;
+        const node = this.LFLru.link.head;
+        const times= get(node.value, 'value.extra.times', 0);
         return times >= this.frequency;
     }
 
