@@ -137,10 +137,10 @@ export default class Cache {
 
     /**
      * 删除数据
-     * @param {string} type
      * @param {string | number} key
+     * @param {string} type
      */
-    delete(type, key) {
+    delete(key, type) {
         this._logger({
             type: LOGGER_TYPE.DELETE,
             msg: `${key} delete`,
