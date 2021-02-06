@@ -43,7 +43,7 @@ export default class Cache {
             onDemotion = () => {},
             clearDataTime = 0, // 每个多少秒清洗lru的数据
             onLogger = () => {}, // 日志
-            openMonitor = true, // 是否开启内存监控
+            openMonitor = false, // 是否开启内存监控
             onNoticeForOOM = () => {}, // 警告函数
             memFilePath = path.resolve(__dirname, '../menFile/') // 溢出文件的存储位置
         } = options;
@@ -128,7 +128,7 @@ export default class Cache {
             if (isNull(target)) {
                 return null;
             }
-            if (this._canUpgrade(key)) {
+            if (this._canUpgrade()) {
                 this._upgrade(target);
             }
             return target;
@@ -197,15 +197,15 @@ export default class Cache {
         }
 
         const node = this.LFLru.link.head;
-        const times= get(node.value, 'value.extra.times', 0);
+        const times= get(node, 'value.extra.times', 0);
         return times >= this.frequency;
     }
 
     /**
      * 升级
-     * @param {Object} node
      */
-    _upgrade(node) {
+    _upgrade() {
+        const node = this.LFLru.link.head;
         this._logger({
             type: LOGGER_TYPE.UPGRADE,
             msg: `${node.value.key} upgrade`,
