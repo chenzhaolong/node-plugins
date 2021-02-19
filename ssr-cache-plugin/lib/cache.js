@@ -246,7 +246,7 @@ export default class Cache {
         this.HFLru.save({
             key: node.value.key,
             value: node.value.value,
-            expired: node.value.expired,
+            expired: node.value.expiredTime,
         });
     }
 
@@ -261,7 +261,7 @@ export default class Cache {
             this.LFLru.save({
                 key: tail.value.key,
                 value: tail.value.value,
-                expired: tail.value.expired,
+                expired: tail.value.expiredTime,
                 extra: {times: 0}
             });
 

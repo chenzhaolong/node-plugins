@@ -326,9 +326,97 @@ describe('test HLF-LRU', () => {
             }, 300);
         });
 
-        it('test the key of HF-LRU is expired', () => {});
+        it('test the key of HF-LRU is expired', () => {
+            const cache = new Cache({
+                LFLength: 3,
+                LFMaxAge: 1000,
+                HFLength: 2,
+                HFMaxAge: 1000,
+                HFTimes: 2
+            });
+            cache.save(keys.a1);
+            cache.save(keys.a3);
 
-        it('test the HF-LRU delete key', () => {})
+            setTimeout(() => {
+                cache.get(keys.a1.key);
+                cache.get(keys.a1.key);
+            }, 100);
+
+            setTimeout(() => {
+                cache.save({key: keys.a2.key, value: keys.a2.value, expired: 100});
+                cache.get(keys.a2.key);
+                cache.get(keys.a2.key);
+                cache.get(keys.a1.key);
+                cache.get(keys.a1.key);
+                cache.get(keys.a3.key);
+            }, 200);
+
+            setTimeout(() => {
+                cache.get(keys.a3.key);
+                const res = cache.get(keys.a2.key);
+                expect(res).to.equal(null);
+                const res1 = cache._has('a2', 'hf');
+                const res2 = cache._has('a2', 'lf');
+                expect(res1).to.equal(false);
+                expect(res2).to.equal(false);
+            }, 900)
+        });
+
+        it('test the HF-LRU delete key', () => {
+            const cache = new Cache({
+                LFLength: 3,
+                LFMaxAge: 1000,
+                HFLength: 2,
+                HFMaxAge: 1000,
+                HFTimes: 2
+            });
+            cache.save({key: keys.a1.key, value: keys.a1.value, expired: 200});
+            cache.save({key: keys.a2.key, value: keys.a2.value, expired: 300});
+
+            setTimeout(() => {
+                cache.save({key: keys.a3.key, value: keys.a3.value, expired: 500});
+                cache.get(keys.a1.key);
+                cache.get(keys.a1.key);
+                cache.get(keys.a2.key);
+                cache.get(keys.a2.key);
+            }, 100);
+
+            // 保存时删除
+            setTimeout(() => {
+                cache.save(keys.a1);
+                const res1 = cache._has(keys.a1.key, 'hf');
+                const res2 = cache._has(keys.a1.key, 'lf');
+                expect(res1).to.equal(false);
+                expect(res2).to.equal(true);
+            }, 500);
+
+            // 降级时删除
+            setTimeout(() => {
+                cache.get(keys.a1.key);
+                cache.get(keys.a1.key);
+                cache.get(keys.a3.key);
+                cache.get(keys.a3.key);
+                const res1 = cache._has(keys.a1.key, 'hf');
+                const res2 = cache._has(keys.a1.key, 'lf');
+                expect(res1).to.equal(true);
+                expect(res2).to.equal(false);
+
+                const res3 = cache._has(keys.a2.key, 'hf');
+                const res4 = cache._has(keys.a2.key, 'lf');
+                expect(res3).to.equal(false);
+                expect(res4).to.equal(false);
+            }, 550);
+
+            // 获取时删除
+            setTimeout(() => {
+                const res = cache.get(keys.a3.key);
+                const res1 = cache._has(keys.a3.key, 'hf');
+                const res2 = cache._has(keys.a3.key, 'lf');
+                expect(res).to.equal(null);
+                expect(res1).to.equal(false);
+                expect(res2).to.equal(false);
+            }, 1500)
+        })
     });
 
     describe('test the upgrade and demotion', () => {
