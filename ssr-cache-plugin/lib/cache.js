@@ -84,9 +84,8 @@ export default class Cache {
             data: {key: options, expiredTime: options.expired}
         });
 
-        //
         if (this._has(options.key, TYPE.HF)) {
-            return this.saveHF(options);
+            return this._saveHF(options);
         }
 
         return this.LFLru.save({
@@ -99,9 +98,9 @@ export default class Cache {
         });
     }
 
-    saveHF(options) {
+    _saveHF(options) {
         // 过期HF删除key，将key存入LF
-        if (this._isExpired(options.key)) {
+        if (this.HFLru.isExpired(options.key)) {
             this.delete(options.key, TYPE.HF);
             return this.LFLru.save({
                 key: options.key,
@@ -112,10 +111,7 @@ export default class Cache {
                 }
             });
         } else {
-            if (this._isOverLength(TYPE.HF)) {
-                this._demotion()
-            }
-            this.HFLru.save({
+            return this.HFLru.save({
                 key: options.key,
                 value: options.value,
                 expired: options.expired,
@@ -287,9 +283,9 @@ export default class Cache {
      * 是否过期
      */
     _isExpired(key) {
-        if (this.LFLru.isExpired(key)) {
+        if (this._has(key, TYPE.LF) && this.LFLru.isExpired(key)) {
             return true;
-        } else if (this.HFLru.isExpired(key)) {
+        } else if (this._has(key, TYPE.HF) && this.HFLru.isExpired(key)) {
             return true;
         } else {
             return false;
