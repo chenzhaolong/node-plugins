@@ -166,7 +166,27 @@ describe('test HLF-LRU', () => {
     });
 
     describe('test the HF-LRU', () => {
+        it('test the HF-LRU can save and get', () => {
+            const cache = new Cache({
+                LFLength: 2,
+                LFMaxAge: 1000,
+                HFLength: 3,
+                HFMaxAge: 1000,
+                HFTimes: 2
+            });
+            cache.save(keys.a1);
+            cache.save(keys.a2);
 
+            setTimeout(() => {
+                
+            }, 100)
+        });
+
+        it('test the HF-LRU is full', () => {});
+
+        it('test the key of HF-LRU is expired', () => {});
+
+        it('test the HF-LRU delete key')
     });
 
     describe('test the upgrade and demotion', () => {

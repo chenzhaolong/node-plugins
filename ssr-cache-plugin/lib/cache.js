@@ -83,6 +83,12 @@ export default class Cache {
             msg: `${options.key} saved`,
             data: {key: options, expiredTime: options.expired}
         });
+
+        //
+        if (this._has(options.key, TYPE.HF)) {
+            return this.saveHF(options);
+        }
+
         return this.LFLru.save({
             key: options.key,
             value: options.value,
@@ -91,6 +97,30 @@ export default class Cache {
                 times: 0
             }
         });
+    }
+
+    saveHF(options) {
+        // 过期HF删除key，将key存入LF
+        if (this._isExpired(options.key)) {
+            this.delete(options.key, TYPE.HF);
+            return this.LFLru.save({
+                key: options.key,
+                value: options.value,
+                expired: options.expired,
+                extra: {
+                    times: 0
+                }
+            });
+        } else {
+            if (this._isOverLength(TYPE.HF)) {
+                this._demotion()
+            }
+            this.HFLru.save({
+                key: options.key,
+                value: options.value,
+                expired: options.expired,
+            });
+        }
     }
 
     /**
