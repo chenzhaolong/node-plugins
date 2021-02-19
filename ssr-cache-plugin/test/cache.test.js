@@ -420,7 +420,79 @@ describe('test HLF-LRU', () => {
     });
 
     describe('test the upgrade and demotion', () => {
+        it('test upgrade', () => {
+            const cache = new Cache({
+                LFLength: 3,
+                LFMaxAge: 1000,
+                HFLength: 2,
+                HFMaxAge: 1000,
+                HFTimes: 2
+            });
 
+            cache.save(keys.a1);
+            cache.save(keys.a2);
+            cache.save(keys.a3);
+
+            setTimeout(() => {
+                cache.get(keys.a1.key);
+                cache.get(keys.a1.key);
+                cache.get(keys.a2.key);
+                cache.get(keys.a2.key);
+            }, 100);
+
+            setTimeout(() => {
+                cache.save(keys.a4);
+                cache.save(keys.a5);
+                cache.get(keys.a3.key);
+                cache.get(keys.a3.key);
+
+                const res1 = cache._has(keys.a3.key, 'hf');
+                const res2 = cache._has(keys.a3.key, 'lf');
+                expect(res1).to.equal(true);
+                expect(res2).to.equal(false);
+            }, 300);
+        });
+
+        it('test demotion', () => {
+            const cache = new Cache({
+                LFLength: 3,
+                LFMaxAge: 1000,
+                HFLength: 2,
+                HFMaxAge: 1000,
+                HFTimes: 2
+            });
+
+            cache.save(keys.a1);
+            cache.save(keys.a2);
+            cache.save(keys.a3);
+
+            setTimeout(() => {
+                cache.get(keys.a1.key);
+                cache.get(keys.a1.key);
+                cache.get(keys.a2.key);
+                cache.get(keys.a2.key);
+            }, 100);
+
+            setTimeout(() => {
+                cache.save(keys.a4);
+                cache.save(keys.a5);
+                cache.get(keys.a3.key);
+                cache.get(keys.a3.key);
+
+                const res1 = cache._has(keys.a1.key, 'hf');
+                const res2 = cache._has(keys.a1.key, 'lf');
+                expect(res1).to.equal(false);
+                expect(res2).to.equal(true);
+            }, 300);
+
+            setTimeout(() => {
+                cache.save(keys.a6);
+                const res1 = cache._has(keys.a4.key, 'hf');
+                const res2 = cache._has(keys.a4.key, 'lf');
+                expect(res1).to.equal(false);
+                expect(res2).to.equal(false);
+            }, 500)
+        });
     });
 
     describe('test the refresh', () => {
