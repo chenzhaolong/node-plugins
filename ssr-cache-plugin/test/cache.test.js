@@ -424,7 +424,48 @@ describe('test HLF-LRU', () => {
     });
 
     describe('test the refresh', () => {
+        it('test clear data per 6s', () => {
+            const cache = new Cache({
+                LFLength: 3,
+                LFMaxAge: 1000,
+                HFLength: 2,
+                HFMaxAge: 1000,
+                HFTimes: 2,
+                clearDataTime: 0.005 // 300ms清除一次
+            });
 
+            cache.save({key: keys.a1.key, value: keys.a1.value, expired: 500});
+            cache.save({key: keys.a2.key, value: keys.a2.value, expired: 260});
+            cache.save({key: keys.a3.key, value: keys.a3.value, expired: 300});
+
+            setTimeout(() => {
+                cache.get(keys.a3.key);
+                cache.get(keys.a3.key);
+            }, 100);
+
+            setTimeout(() => {
+                const {LFKeys, HFKeys} = cache.getKeys(true);
+                expect(LFKeys).to.deep.equal(['a2', 'a1']);
+                expect(HFKeys).to.deep.equal(['a3']);
+            }, 250);
+
+            setTimeout(() => {
+                const {LFKeys, HFKeys} = cache.getKeys(true);
+                expect(LFKeys).to.deep.equal(['a1']);
+                expect(HFKeys).to.deep.equal(['a3']);
+            }, 500);
+
+            setTimeout(() => {
+                const res = cache.get(keys.a1.key);
+                expect(res).to.equal(null);
+            }, 600);
+
+            setTimeout(() => {
+                const {LFKeys, HFKeys} = cache.getKeys(true);
+                expect(LFKeys).to.deep.equal([]);
+                expect(HFKeys).to.deep.equal([]);
+            }, 610);
+        })
     });
 
     describe('test the monitor', () => {
