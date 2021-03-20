@@ -3,7 +3,6 @@
  */
 import DoubleLink from './doubleLink';
 import {isString, isNumber} from 'lodash';
-import LoggerCode from './loggerCode';
 
 const OS = require('os');
 
@@ -37,15 +36,14 @@ export default class LRU {
         this.reset();
     }
 
-    _inputIsEffective(key) {
+    _inputIsEffective(key, usage) {
         if (isString(key) || isNumber(key)) {
             return true
         } else {
-            const self = this;
             this.logger({
                 type: LOGGER_TYPE.OTHER,
-                context: self,
-                // ...LoggerCode.ERROR_INPUT_KEY
+                msg: `the ${key} is illegality when ${usage}.`,
+                data: {key: key, date: Date.now()}
             });
             return false
         }
@@ -58,7 +56,6 @@ export default class LRU {
      */
     save(options) {
         const {key, value, expired = this.maxAge, extra = ''} = options;
-        const self = this;
         // key不存在且已经到达长度
         if (!this.has(key) && this.isOverLength()) {
             this.currentLength -= 1;
@@ -70,12 +67,20 @@ export default class LRU {
             this.store.set(key, value);
             this.link.remove(item => item.key === key);
             this.link.unshift(cache);
-            this.logger({type: LOGGER_TYPE.UPDATE, context: self});
+            this.logger({
+                type: LOGGER_TYPE.UPDATE,
+                msg: `${key} update`,
+                data: {key, date: Date.now()}
+            });
         } else {
             this.store.set(key, value);
             this.link.unshift(cache);
             this.currentLength += 1;
-            this.logger({type: LOGGER_TYPE.SAVE, context: self});
+            this.logger({
+                type: LOGGER_TYPE.SAVE,
+                msg: `${key} save`,
+                data: {key, date: Date.now()}
+            });
         }
         return true
     }
@@ -86,8 +91,7 @@ export default class LRU {
      * @return {any}
      */
     get(key) {
-        const self = this;
-        if (!this._inputIsEffective(key)) {
+        if (!this._inputIsEffective(key, 'lru-get')) {
             return null
         }
         if (this.has(key)) {
@@ -103,7 +107,11 @@ export default class LRU {
                 const content = target.value;
                 content.currentTime = Date.now();
                 this.link.unshift(content);
-                this.logger({type: LOGGER_TYPE.GET, context: self});
+                this.logger({
+                    type: LOGGER_TYPE.GET,
+                    msg: `${key} get`,
+                    data: {key, date: Date.now()}
+                });
                 return this.store.get(key);
             }
         } else {
@@ -117,14 +125,17 @@ export default class LRU {
      * @return {ListNode}
      */
     delete(key) {
-        const self = this;
-        if (!this._inputIsEffective(key)) {
+        if (!this._inputIsEffective(key, 'lru-delete')) {
             return null
         }
-        this.onBeforeDelete();
+        this.onBeforeDelete(key);
         this.store.delete(key);
         this.currentLength -= 1;
-        this.logger({type: LOGGER_TYPE.DELETE, context: self});
+        this.logger({
+            type: LOGGER_TYPE.DELETE,
+            msg: `${key} delete`,
+            data: {key, date: Date.now()}
+        });
         return this.link.remove(item => item.key === key);
     }
 
@@ -142,7 +153,7 @@ export default class LRU {
      * @return {boolean}
      */
     has(key) {
-        if (!this._inputIsEffective(key)) {
+        if (!this._inputIsEffective(key, 'lru-delete')) {
             return false;
         }
         return this.store.has(key);
@@ -154,7 +165,7 @@ export default class LRU {
      * @return {boolean}
      */
     isExpired(key) {
-        if (!this._inputIsEffective(key)) {
+        if (!this._inputIsEffective(key, 'lru-isExpired')) {
             return true;
         }
         if (!this.has(key)) {
@@ -207,7 +218,7 @@ export default class LRU {
      * @return {boolean}
      */
     forceUpdateCache(key, value) {
-        if (!this._inputIsEffective(key)) {
+        if (!this._inputIsEffective(key, 'lru-forceUpdateCache')) {
             return false
         }
         if (!this.has(key)) {
@@ -233,7 +244,7 @@ export default class LRU {
      * @return {boolean}
      */
     setExpiredTime(key, expiredTime) {
-        if (!this._inputIsEffective(key) || !this._inputIsEffective(expiredTime)) {
+        if (!this._inputIsEffective(key, 'lru-setExpiredTime') || !this._inputIsEffective(expiredTime, 'lru-setExpiredTime')) {
             return false
         }
         let canModify = false;
@@ -253,8 +264,11 @@ export default class LRU {
         this.store = new Map(); // 存取
         this.link = new DoubleLink(); // 管理和排序
         if (showLog) {
-            const self = this;
-            this.logger({type: LOGGER_TYPE.RESET, context: self});
+            this.logger({
+                type: LOGGER_TYPE.RESET,
+                msg: 'lru reset',
+                data: {date: Date.now()}
+            });
         }
     }
 

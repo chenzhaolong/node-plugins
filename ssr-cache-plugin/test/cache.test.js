@@ -496,7 +496,7 @@ describe('test HLF-LRU', () => {
     });
 
     describe('test the refresh', () => {
-        it('test clear data per 6s', () => {
+        it('test clear data per 300ms', () => {
             const cache = new Cache({
                 LFLength: 3,
                 LFMaxAge: 1000,

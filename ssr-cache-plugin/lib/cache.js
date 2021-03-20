@@ -5,7 +5,7 @@
  */
 import LRU from './lru';
 import Monitor from './monitor';
-import { isNull, isNumber, get } from 'lodash';
+import { isNull, isNumber, get, isFunction } from 'lodash';
 const path = require('path');
 
 const HF_MAX_LENGTH = 10 * 1000;
@@ -21,13 +21,15 @@ const TYPE = {
 };
 
 const LOGGER_TYPE = {
-    SAVE: 'save',
-    GET: 'get',
-    RESET: 'reset',
-    DELETE: 'delete',
-    UPGRADE: 'upgrade',
-    DEMOTION: 'demotion',
-    OOM: 'outOfMemory'
+    SAVE: 'save', // 保存
+    GET: 'get', // 获取
+    RESET: 'reset', // 重置
+    DELETE: 'delete', // 删除
+    UPGRADE: 'upgrade', // 升级
+    DEMOTION: 'demotion', // 降级
+    OOM: 'outOfMemory', // 快超过内存上限,
+    LF: 'LF-LRU', // 低频LRU
+    HF: 'HF-LRU' // 高频LRU
 };
 
 export default class Cache {
@@ -48,8 +50,22 @@ export default class Cache {
             memFilePath = path.resolve(__dirname, '../menFile/') // 溢出文件的存储位置
         } = options;
 
-        this.LFLru = new LRU({length: LFLength, maxAge: LFMaxAge, onBeforeDelete});
-        this.HFLru = new LRU({length: HFLength, maxAge: HFMaxAge, onBeforeDelete});
+        this.LFLru = new LRU({
+            length: LFLength,
+            maxAge: LFMaxAge,
+            onBeforeDelete,
+            logger: (data) => {
+                onLogger({type: LOGGER_TYPE.LF, data: data, msg: ''})
+            }
+        });
+        this.HFLru = new LRU({
+            length: HFLength,
+            maxAge: HFMaxAge,
+            onBeforeDelete,
+            logger: (data) => {
+                onLogger({type: LOGGER_TYPE.HF, data: data, msg: ''})
+            }
+        });
         this.frequency = HFTimes;
         this.onUpgrade = onUpgrade;
         this.onDemotion = onDemotion;
@@ -232,11 +248,6 @@ export default class Cache {
      */
     _upgrade() {
         const node = this.LFLru.link.head;
-        this._logger({
-            type: LOGGER_TYPE.UPGRADE,
-            msg: `${node.value.key} upgrade`,
-            data: {key: node.value.key, from: 'LFL', to: 'HFL'}
-        });
 
         // 删除LF的key节点
         this.LFLru.delete(node.value.key);
@@ -248,6 +259,14 @@ export default class Cache {
             value: node.value.value,
             expired: node.value.expiredTime,
         });
+
+        this._logger({
+            type: LOGGER_TYPE.UPGRADE,
+            msg: `${node.value.key} upgrade`,
+            data: {key: node.value.key, from: 'LFL', to: 'HFL'}
+        });
+
+        isFunction(this.onUpgrade) && this.onUpgrade(node.value)
     }
 
     /**
@@ -270,9 +289,20 @@ export default class Cache {
                 msg: `${tail.value.key} demotion`,
                 data: {key: tail.value.key, from: 'HFL', to: 'LFL'}
             });
+
+            isFunction(this.onDemotion) && this.onDemotion(tail.value)
         }
     }
 
+    /**
+     * 日志
+     * @param {Object} options 选项
+     * options = {
+     *     type: string 日志类型，
+     *     msg：string 日志信息,
+     *     data: Object 日志数据
+     * }
+     */
     _logger(options) {
         const {type, msg, data} = options;
         data.currentTime = Date.now();
@@ -280,17 +310,18 @@ export default class Cache {
     }
 
     /**
+     * @deprecated
      * 是否过期
      */
-    _isExpired(key) {
-        if (this._has(key, TYPE.LF) && this.LFLru.isExpired(key)) {
-            return true;
-        } else if (this._has(key, TYPE.HF) && this.HFLru.isExpired(key)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    // _isExpired(key) {
+    //     if (this._has(key, TYPE.LF) && this.LFLru.isExpired(key)) {
+    //         return true;
+    //     } else if (this._has(key, TYPE.HF) && this.HFLru.isExpired(key)) {
+    //         return true;
+    //     } else {
+    //         return false;
+    //     }
+    // }
 
     /**
      * 是否有key
