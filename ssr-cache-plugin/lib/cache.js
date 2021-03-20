@@ -6,6 +6,7 @@
 import LRU from './lru';
 import Monitor from './monitor';
 import { isNull, isNumber, get, isFunction } from 'lodash';
+import { getSystemTime } from './date'
 const path = require('path');
 
 const HF_MAX_LENGTH = 10 * 1000;
@@ -28,8 +29,8 @@ const LOGGER_TYPE = {
     UPGRADE: 'upgrade', // 升级
     DEMOTION: 'demotion', // 降级
     OOM: 'outOfMemory', // 快超过内存上限,
-    LF: 'LF-LRU', // 低频LRU
-    HF: 'HF-LRU' // 高频LRU
+    LF: 'LF', // 低频LRU
+    HF: 'HF' // 高频LRU
 };
 
 export default class Cache {
@@ -54,16 +55,18 @@ export default class Cache {
             length: LFLength,
             maxAge: LFMaxAge,
             onBeforeDelete,
-            logger: (data) => {
-                onLogger({type: LOGGER_TYPE.LF, data: data, msg: ''})
+            logger: (options) => {
+                const {data, type, msg} = options;
+                onLogger({type: LOGGER_TYPE.LF, data: data, msg: `${LOGGER_TYPE.LF}-${type} ${msg}`})
             }
         });
         this.HFLru = new LRU({
             length: HFLength,
             maxAge: HFMaxAge,
             onBeforeDelete,
-            logger: (data) => {
-                onLogger({type: LOGGER_TYPE.HF, data: data, msg: ''})
+            logger: (options) => {
+                const {data, type, msg} = options;
+                onLogger({type: LOGGER_TYPE.HF, data: data, msg: `${LOGGER_TYPE.HF}-${type} ${msg}`})
             }
         });
         this.frequency = HFTimes;
@@ -96,7 +99,7 @@ export default class Cache {
 
         this._logger({
             type: LOGGER_TYPE.SAVE,
-            msg: `${options.key} saved`,
+            msg: `${options.key} save`,
             data: {key: options, expiredTime: options.expired}
         });
 
@@ -274,7 +277,7 @@ export default class Cache {
      */
     _demotion() {
         const tail = this.HFLru.link.tail;
-        tail && this.HFLru.delete(tail.value.keys);
+        tail && this.HFLru.delete(tail.value.key);
         // 存在且没过期
         if (tail && (Date.now() <= tail.value.currentTime + tail.value.expiredTime)) {
             this.LFLru.save({
@@ -305,8 +308,9 @@ export default class Cache {
      */
     _logger(options) {
         const {type, msg, data} = options;
-        data.currentTime = Date.now();
-        this.onLogger({type, msg, data});
+        const date = getSystemTime();
+        data.currentTime = date.time;
+        this.onLogger({type, msg: `${msg} ${date.systemTime}`, data});
     }
 
     /**

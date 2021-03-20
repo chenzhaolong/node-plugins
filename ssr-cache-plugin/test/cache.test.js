@@ -545,6 +545,61 @@ describe('test HLF-LRU', () => {
     });
 
     describe('test the others', () => {
+        it('test the onUpgrade action', () => {
+            const cache = new Cache({
+                LFLength: 3,
+                LFMaxAge: 1000,
+                HFLength: 2,
+                HFMaxAge: 1000,
+                HFTimes: 2,
+                onUpgrade: (node) => {
+                    const {key, value} = node;
+                    expect(key).to.equal(keys.a3.key);
+                    expect(value).to.equal(keys.a3.value);
+                }
+            });
+            cache.save({key: keys.a2.key, value: keys.a2.value});
+            cache.save({key: keys.a3.key, value: keys.a3.value});
 
+            setTimeout(() => {
+                cache.get(keys.a3.key);
+                cache.get(keys.a3.key);
+            }, 200);
+        });
+
+        it('test the onDemotion action', () => {
+            const cache = new Cache({
+                LFLength: 3,
+                LFMaxAge: 1000,
+                HFLength: 1,
+                HFMaxAge: 1000,
+                HFTimes: 2,
+                onDemotion: (node) => {
+                    const {key, value} = node;
+                    expect(key).to.equal(keys.a3.key);
+                    expect(value).to.equal(keys.a3.value);
+                }
+                // onLogger: (data) => {
+                //     console.log(data.msg)
+                // }
+            });
+
+            cache.save({key: keys.a2.key, value: keys.a2.value});
+            cache.save({key: keys.a3.key, value: keys.a3.value});
+
+            setTimeout(() => {
+                cache.get(keys.a3.key);
+                cache.get(keys.a3.key);
+            }, 200);
+
+            setTimeout(() => {
+                cache.save({key: keys.a1.key, value: keys.a1.value});
+                cache.get(keys.a2.key);
+            }, 300);
+
+            setTimeout(() => {
+                cache.get(keys.a2.key);
+            }, 400)
+        });
     });
 });

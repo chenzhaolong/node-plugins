@@ -3,6 +3,7 @@
  */
 import DoubleLink from './doubleLink';
 import {isString, isNumber} from 'lodash';
+import { getSystemTime } from './date';
 
 const OS = require('os');
 
@@ -32,7 +33,12 @@ export default class LRU {
         this.maxSize = maxSize;
         this.maxAge = maxAge;
         this.onBeforeDelete = onBeforeDelete;
-        this.logger = logger;
+        this.logger = (options) => {
+            const date = getSystemTime();
+            options.msg = `${options.msg} ${date.systemTime}`;
+            options.data.date = date.time;
+            logger(options)
+        };
         this.reset();
     }
 
@@ -43,7 +49,7 @@ export default class LRU {
             this.logger({
                 type: LOGGER_TYPE.OTHER,
                 msg: `the ${key} is illegality when ${usage}.`,
-                data: {key: key, date: Date.now()}
+                data: {key: key}
             });
             return false
         }
@@ -70,7 +76,7 @@ export default class LRU {
             this.logger({
                 type: LOGGER_TYPE.UPDATE,
                 msg: `${key} update`,
-                data: {key, date: Date.now()}
+                data: {key}
             });
         } else {
             this.store.set(key, value);
@@ -79,7 +85,7 @@ export default class LRU {
             this.logger({
                 type: LOGGER_TYPE.SAVE,
                 msg: `${key} save`,
-                data: {key, date: Date.now()}
+                data: {key}
             });
         }
         return true
@@ -110,7 +116,7 @@ export default class LRU {
                 this.logger({
                     type: LOGGER_TYPE.GET,
                     msg: `${key} get`,
-                    data: {key, date: Date.now()}
+                    data: {key}
                 });
                 return this.store.get(key);
             }
@@ -134,7 +140,7 @@ export default class LRU {
         this.logger({
             type: LOGGER_TYPE.DELETE,
             msg: `${key} delete`,
-            data: {key, date: Date.now()}
+            data: {key}
         });
         return this.link.remove(item => item.key === key);
     }
@@ -153,7 +159,7 @@ export default class LRU {
      * @return {boolean}
      */
     has(key) {
-        if (!this._inputIsEffective(key, 'lru-delete')) {
+        if (!this._inputIsEffective(key, 'lru-has')) {
             return false;
         }
         return this.store.has(key);
@@ -267,7 +273,7 @@ export default class LRU {
             this.logger({
                 type: LOGGER_TYPE.RESET,
                 msg: 'lru reset',
-                data: {date: Date.now()}
+                data: {}
             });
         }
     }
