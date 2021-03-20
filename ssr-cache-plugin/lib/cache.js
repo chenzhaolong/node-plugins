@@ -48,7 +48,8 @@ export default class Cache {
             onLogger = () => {}, // 日志
             openMonitor = false, // 是否开启内存监控
             onNoticeForOOM = () => {}, // 警告函数
-            memFilePath = path.resolve(__dirname, '../menFile/') // 溢出文件的存储位置
+            memFilePath = path.resolve(__dirname, '../menFile/'), // 溢出文件的存储位置
+            memoryLimit = {} // 设置LRU内存上限
         } = options;
 
         this.LFLru = new LRU({
@@ -82,7 +83,7 @@ export default class Cache {
             }, clearDataTime * 1000 * 60);
         }
 
-        Monitor.injectExtraPower({onNoticeForOOM, openMonitor, memFilePath});
+        Monitor.injectExtraPower({onNoticeForOOM, openMonitor, memFilePath, memoryLimit});
     }
 
     /**
@@ -91,9 +92,9 @@ export default class Cache {
     save (options) {
         const mem = Monitor.computedMemory();
         if (Monitor.isArriveOneLevel(mem)) {
-            Monitor.takeAction();
+            Monitor.takeAction(mem);
             !this._isLruEmpty(TYPE.HF) && this._reset(TYPE.HF);
-            this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}`, data: {mem}});
+            this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem} for levelOne`, data: {mem}});
             return
         }
 
@@ -236,8 +237,10 @@ export default class Cache {
         if (Monitor.isArriveThreeLevel(mem) || Monitor.isArriveTwoLevel(mem)) {
             if (Monitor.isArriveTwoLevel(mem)) {
                 !this._isLruEmpty(TYPE.HF) && this._reset(TYPE.HF);
+                this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem} for levelTwo`, data: {mem}});
+            } else {
+                this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem} for levelThree`, data: {mem}});
             }
-            this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}`, data: {mem}});
             return false
         }
 

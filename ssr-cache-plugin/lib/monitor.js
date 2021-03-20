@@ -1,48 +1,60 @@
 /**
  * @file 监控器
- * 大于60：HFL只出不进, LFL正常；
- * 大于70：HFL清空且不能进，LFL正常;
- * 大于80：LFL只出不进；
+ * 大于70：HFL只出不进, LFL正常；
+ * 大于80：HFL清空且不能进，LFL正常;
+ * 大于85：LFL只出不进；
  */
-import { debounce } from 'lodash';
-const os = require('os');
 const heapdump = require('heapdump');
+const fs = require('fs');
 
 let Options = {
     warningFn: '',
     openMonitor: '',
-    memFilePath: ''
+    memFilePath: '',
+    memoryLimit: {
+        oneLevel: 85,
+        twoLevel: 80,
+        threeLevel: 70
+    }
 };
 
 export default class Monitor {
 
     static injectExtraPower (options) {
+        let tmp = Object.assign({}, Options.memoryLimit, options.memoryLimit);
+        // 保证升序
+        const tmpValues = [tmp.oneLevel, tmp.twoLevel, tmp.threeLevel].sort((a, b) => a - b);
         Options = {
             warningFn: options.onNoticeForOOM,
             openMonitor: options.openMonitor,
-            memFilePath: options.memFilePath
+            memFilePath: options.memFilePath,
+            memoryLimit: {
+                oneLevel: tmpValues[2],
+                twoLevel: tmpValues[1],
+                threeLevel: tmpValues[0]
+            }
         }
     }
 
     /**
-     * 是否到达三级告警：内存使用率在60%以上
+     * 是否到达三级告警：内存使用率在70%以上
      */
     static isArriveThreeLevel (mem) {
-        return Options.openMonitor && mem >= 60 && mem < 70;
+        return Options.openMonitor && mem >= Options.memoryLimit.threeLevel && mem < Options.memoryLimit.twoLevel;
     }
 
     /**
-     * 是否到达二级警告：内存使用率在70%以上
+     * 是否到达二级警告：内存使用率在80%以上
      */
     static isArriveTwoLevel (mem) {
-        return Options.openMonitor && mem >= 70 && mem < 80;
+        return Options.openMonitor && mem >= Options.memoryLimit.twoLevel && mem < Options.memoryLimit.oneLevel;
     }
 
     /**
-     * 是否到达一级警告：内存使用率在80%以上
+     * 是否到达一级警告：内存使用率在85%以上
      */
     static isArriveOneLevel (mem) {
-        return Options.openMonitor && mem >= 80;
+        return Options.openMonitor && mem >= Options.memoryLimit.oneLevel;
     }
 
     /**
@@ -51,12 +63,12 @@ export default class Monitor {
     static takeAction (mem) {
         const {openMonitor, memFilePath, warningFn} = Options;
         if (openMonitor) {
-            const noticeFn = debounce(() => {
-                warningFn(mem);
-                const date = (new Date()).toLocaleDateString().replace(/[\/]/g, '.');
-                heapdump.writeSnapshot(`${memFilePath}/snapShot_${date}.heapsnapshot`);
-            }, 60 * 1000);
-            noticeFn();
+            warningFn(mem);
+            if (!fs.existsSync(memFilePath)) {
+                fs.mkdirSync(memFilePath);
+            }
+            const date = Date.now();
+            heapdump.writeSnapshot(`${memFilePath}/snapShot_${date}.heapsnapshot`);
         }
     }
 
@@ -64,8 +76,7 @@ export default class Monitor {
         if (!Options.openMonitor) {
             return 0;
         }
-        const total = os.totalmem();
-        const free = os.freemem();
-        return Math.round(((total - free) / total) * 100);
+        const {heapTotal, heapUsed} = process.memoryUsage();
+        return Math.round(((heapUsed) / heapTotal) * 100);
     }
 }
