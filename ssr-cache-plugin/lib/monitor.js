@@ -58,7 +58,7 @@ export default class Monitor {
     }
 
     /**
-     * warn触发，日志输出, 溢出内存文件输出，1分钟输出一次（防抖）
+     * warn触发，日志输出, 溢出内存文件输出
      */
     static takeAction (mem) {
         const {openMonitor, memFilePath, warningFn} = Options;

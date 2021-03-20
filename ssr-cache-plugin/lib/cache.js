@@ -48,7 +48,7 @@ export default class Cache {
             onLogger = () => {}, // 日志
             openMonitor = false, // 是否开启内存监控
             onNoticeForOOM = () => {}, // 警告函数
-            memFilePath = path.resolve(__dirname, '../menFile/'), // 溢出文件的存储位置
+            memFilePath = path.resolve(process.cwd(), '../memSnapShot/'), // 溢出文件的存储位置
             memoryLimit = {} // 设置LRU内存上限
         } = options;
 
@@ -94,7 +94,7 @@ export default class Cache {
         if (Monitor.isArriveOneLevel(mem)) {
             Monitor.takeAction(mem);
             !this._isLruEmpty(TYPE.HF) && this._reset(TYPE.HF);
-            this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem} for levelOne`, data: {mem}});
+            this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}% for levelOne`, data: {mem}});
             return
         }
 
@@ -233,20 +233,24 @@ export default class Cache {
      * @return boolean
      */
     _canUpgrade() {
-        const mem = Monitor.computedMemory();
-        if (Monitor.isArriveThreeLevel(mem) || Monitor.isArriveTwoLevel(mem)) {
-            if (Monitor.isArriveTwoLevel(mem)) {
-                !this._isLruEmpty(TYPE.HF) && this._reset(TYPE.HF);
-                this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem} for levelTwo`, data: {mem}});
-            } else {
-                this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem} for levelThree`, data: {mem}});
-            }
-            return false
-        }
-
         const node = this.LFLru.link.head;
         const times= get(node, 'value.extra.times', 0);
-        return times >= this.frequency;
+        if (times >= this.frequency) {
+            const mem = Monitor.computedMemory();
+            if (Monitor.isArriveThreeLevel(mem) || Monitor.isArriveTwoLevel(mem)) {
+                if (Monitor.isArriveTwoLevel(mem)) {
+                    !this._isLruEmpty(TYPE.HF) && this._reset(TYPE.HF);
+                    this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}% for levelTwo`, data: {mem}});
+                } else {
+                    this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}% for levelThree`, data: {mem}});
+                }
+                return false
+            } else {
+                return true
+            }
+        } else {
+            return false
+        }
     }
 
     /**

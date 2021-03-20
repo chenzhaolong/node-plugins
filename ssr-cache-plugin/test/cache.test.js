@@ -550,21 +550,64 @@ describe('test HLF-LRU', () => {
                 HFTimes: 2,
                 openMonitor: true,
                 onNoticeForOOM: (mem) => {
-                    console.log(mem)
+                    expect(mem).to.be.above(30)
                 },
                 memoryLimit: {
                     oneLevel: 30,
                     twoLevel: 20,
                     threeLevel: 10
-                },
-                onLogger(options) {
-                    console.log(options.msg)
                 }
             });
             cache.save({key: keys.a2.key, value: keys.a2.value});
             const res = cache.get(keys.a2.key);
             expect(res).to.equal(null)
         });
+
+        it('test the threeLevel' , () => {
+            const cache = new Cache({
+                LFLength: 3,
+                LFMaxAge: 1000,
+                HFLength: 2,
+                HFMaxAge: 1000,
+                HFTimes: 2,
+                openMonitor: true,
+                memoryLimit: {
+                    oneLevel: 70,
+                    twoLevel: 60,
+                    threeLevel: 50
+                },
+                onLogger(options) {
+                    console.log(options.msg)
+                }
+            });
+
+            cache.save({key: keys.a2.key, value: keys.a2.value});
+            cache.save({key: keys.a3.key, value: keys.a3.value});
+
+            setTimeout(() => {
+                cache.get(keys.a3.key);
+                cache.get(keys.a3.key);
+                const {LFKeys, HFKeys} = cache.getKeys(true)
+                expect(LFKeys).to.deep.equal(['a3', 'a2']);
+                expect(HFKeys).to.deep.equal([]);
+            }, 300);
+
+            setTimeout(() => {
+                cache.get(keys.a3.key);
+                cache.get(keys.a2.key);
+                const {LFKeys, HFKeys} = cache.getKeys(true)
+                expect(LFKeys).to.deep.equal(['a2', 'a3']);
+                expect(HFKeys).to.deep.equal([]);
+            }, 500);
+        });
+
+        it('test the twoLevel', () => {
+
+        });
+
+        it ('test the oneLevel', () => {
+
+        })
     });
 
     // describe('test the others', () => {
