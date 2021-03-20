@@ -34,6 +34,20 @@ const LOGGER_TYPE = {
 };
 
 export default class Cache {
+    /**
+     * 全局设置并开启LRU内存监督
+     */
+    static setMonitor(options) {
+        const {
+            openMonitor = false, // 是否开启内存监控
+            onNoticeForOOM = () => {}, // 警告函数
+            memFilePath = path.resolve(process.cwd(), '../memSnapShot/'), // 溢出文件的存储位置
+            memoryLimit = {} // 设置LRU内存上限
+        } = options;
+
+        Monitor.injectExtraPower({onNoticeForOOM, openMonitor, memFilePath, memoryLimit});
+    }
+
     constructor(options) {
         const {
             HFLength = HF_MAX_LENGTH,
@@ -46,10 +60,7 @@ export default class Cache {
             onDemotion = () => {},
             clearDataTime = 0, // 每个多少秒清洗lru的数据
             onLogger = () => {}, // 日志
-            openMonitor = false, // 是否开启内存监控
-            onNoticeForOOM = () => {}, // 警告函数
-            memFilePath = path.resolve(process.cwd(), '../memSnapShot/'), // 溢出文件的存储位置
-            memoryLimit = {} // 设置LRU内存上限
+            allowMonitor = false // 是否允许内存被监督
         } = options;
 
         this.LFLru = new LRU({
@@ -70,6 +81,7 @@ export default class Cache {
                 onLogger({type: LOGGER_TYPE.HF, data: data, msg: `${LOGGER_TYPE.HF}-${type} ${msg}`})
             }
         });
+        this.allowMonitor = allowMonitor;
         this.frequency = HFTimes;
         this.onUpgrade = onUpgrade;
         this.onDemotion = onDemotion;
@@ -82,8 +94,6 @@ export default class Cache {
                 !this._isLruEmpty(TYPE.HF) && this.HFLru.refresh();
             }, clearDataTime * 1000 * 60);
         }
-
-        Monitor.injectExtraPower({onNoticeForOOM, openMonitor, memFilePath, memoryLimit});
     }
 
     /**
@@ -91,7 +101,7 @@ export default class Cache {
      */
     save (options) {
         const mem = Monitor.computedMemory();
-        if (Monitor.isArriveOneLevel(mem)) {
+        if (this.allowMonitor && Monitor.isArriveOneLevel(mem)) {
             Monitor.takeAction(mem);
             !this._isLruEmpty(TYPE.HF) && this._reset(TYPE.HF);
             this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}% for levelOne`, data: {mem}});
@@ -237,7 +247,7 @@ export default class Cache {
         const times= get(node, 'value.extra.times', 0);
         if (times >= this.frequency) {
             const mem = Monitor.computedMemory();
-            if (Monitor.isArriveThreeLevel(mem) || Monitor.isArriveTwoLevel(mem)) {
+            if (this.allowMonitor && (Monitor.isArriveThreeLevel(mem) || Monitor.isArriveTwoLevel(mem))) {
                 if (Monitor.isArriveTwoLevel(mem)) {
                     !this._isLruEmpty(TYPE.HF) && this._reset(TYPE.HF);
                     this._logger({type: LOGGER_TYPE.OOM, msg: `the memory has used ${mem}% for levelTwo`, data: {mem}});

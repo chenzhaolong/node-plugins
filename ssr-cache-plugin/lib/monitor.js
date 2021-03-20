@@ -6,11 +6,12 @@
  */
 const heapdump = require('heapdump');
 const fs = require('fs');
+const path = require('path');
 
 let Options = {
-    warningFn: '',
-    openMonitor: '',
-    memFilePath: '',
+    warningFn: () => {},
+    openMonitor: false,
+    memFilePath: path.resolve(process.cwd(), '../memSnapShot/'),
     memoryLimit: {
         oneLevel: 85,
         twoLevel: 80,
@@ -37,21 +38,21 @@ export default class Monitor {
     }
 
     /**
-     * 是否到达三级告警：内存使用率在70%以上
+     * 是否到达三级告警：默认内存使用率在70%以上
      */
     static isArriveThreeLevel (mem) {
         return Options.openMonitor && mem >= Options.memoryLimit.threeLevel && mem < Options.memoryLimit.twoLevel;
     }
 
     /**
-     * 是否到达二级警告：内存使用率在80%以上
+     * 是否到达二级警告：默认内存使用率在80%以上
      */
     static isArriveTwoLevel (mem) {
         return Options.openMonitor && mem >= Options.memoryLimit.twoLevel && mem < Options.memoryLimit.oneLevel;
     }
 
     /**
-     * 是否到达一级警告：内存使用率在85%以上
+     * 是否到达一级警告：默认内存使用率在85%以上
      */
     static isArriveOneLevel (mem) {
         return Options.openMonitor && mem >= Options.memoryLimit.oneLevel;
