@@ -1,6 +1,5 @@
 /**
  * @file 基于lru的低高频缓存策略
- * todo：logger的使用
  * todo：对缓存的内容体积做限制
  */
 import LRU from './lru';
