@@ -3,11 +3,9 @@
  */
 
 import Cache from './lib/cache'
-import LRU from 'lib/lru'
-import LoggerCode from './lib/loggerCode'
+import LRU from './lib/lru'
 
 export default {
     Cache,
-    LRU,
-    LoggerCode
+    LRU
 }

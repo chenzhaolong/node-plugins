@@ -1,8 +1,10 @@
 /**
  * @file 高低频lru算法单元测试
  */
-import Cache from '../lib/cache'
+import CachePlugin from '../index'
 const chai = require('chai');
+
+const Cache = CachePlugin.Cache;
 
 const expect = chai.expect;
 describe('test HLF-LRU', () => {

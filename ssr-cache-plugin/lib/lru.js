@@ -17,7 +17,7 @@ const LOGGER_TYPE = {
     GET: 'get', // 获取
     DELETE: 'delete', // 删除
     RESET: 'reset', // 重置
-    OTHER: 'other' // 其他情况
+    ERROR: 'error' // 错误情况
 };
 
 export default class LRU {
@@ -47,7 +47,7 @@ export default class LRU {
             return true
         } else {
             this.logger({
-                type: LOGGER_TYPE.OTHER,
+                type: LOGGER_TYPE.ERROR,
                 msg: `the ${key} is illegality when ${usage}.`,
                 data: {key: key}
             });

@@ -4,7 +4,7 @@
  */
 import LRU from './lru';
 import Monitor from './monitor';
-import { isNull, isNumber, get, isFunction } from 'lodash';
+import { isNull, isNumber, get, isFunction, isString, isObject } from 'lodash';
 import { getSystemTime } from './date'
 const path = require('path');
 
@@ -29,7 +29,8 @@ const LOGGER_TYPE = {
     DEMOTION: 'demotion', // 降级
     OOM: 'outOfMemory', // 快超过内存上限,
     LF: 'LF', // 低频LRU
-    HF: 'HF' // 高频LRU
+    HF: 'HF', // 高频LRU
+    ERROR: 'error' // 错误
 };
 
 export default class Cache {
@@ -97,8 +98,23 @@ export default class Cache {
 
     /**
      * 保存数据
+     * @param {any} key 存储的key值，可以是对象
+     * @param {any} value 存储的内容
+     * @param {number} expired 缓存的有效时间
+     * @return {boolean}
      */
-    save (options) {
+    save (key, value, expired) {
+        let options;
+        if (isObject(key) && !value && !expired) {
+            options = key;
+        } else {
+            options = {key: key, value: value, expired: expired};
+        }
+
+        if (!this._isValidator(options)) {
+            return false
+        }
+
         const mem = Monitor.computedMemory();
         if (this.allowMonitor && Monitor.isArriveOneLevel(mem)) {
             Monitor.takeAction(mem);
@@ -125,6 +141,39 @@ export default class Cache {
                 times: 0
             }
         });
+    }
+
+    /**
+     * 检查输入参数是否有效
+     * @param {object} options 入参
+     */
+    _isValidator(options) {
+        const {key, value, expired} = options;
+        if (!isString(key)) {
+            this._logger({
+                type: LOGGER_TYPE.ERROR,
+                msg: `the key ${key.toString()} is error when save in HL-LRU`,
+                data: {saveKey: key}
+            });
+            return false;
+        }
+        if (!value) {
+            this._logger({
+                type: LOGGER_TYPE.ERROR,
+                msg: `the value is empty for key ${key} when save in HL-LRU`,
+                data: {key: key}
+            });
+            return false;
+        }
+        if (expired && !isNumber(expired)) {
+            this._logger({
+                type: LOGGER_TYPE.ERROR,
+                msg: `the expired must be number for key ${key} when save in HL-LRU and use expired`,
+                data: {key: key, expired: expired}
+            });
+            return false;
+        }
+        return true;
     }
 
     _saveHF(options) {

@@ -10,7 +10,8 @@
   },
   "keywords": [
     "ssr",
-    "cache"
+    "cache",
+    "LRU"
   ],
   "author": "dragonchen",
   "license": "ISC",
