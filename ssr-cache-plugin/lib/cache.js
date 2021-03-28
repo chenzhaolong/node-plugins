@@ -69,7 +69,8 @@ export default class Cache {
             onBeforeDelete,
             logger: (options) => {
                 const {data, type, msg} = options;
-                onLogger({type: LOGGER_TYPE.LF, data: data, msg: `${LOGGER_TYPE.LF}-${type} ${msg}`})
+                const logType = type === 'error' ? LOGGER_TYPE.ERROR : LOGGER_TYPE.LF;
+                onLogger({type: logType, data: data, msg: `${LOGGER_TYPE.LF}-${type} ${msg}`})
             }
         });
         this.HFLru = new LRU({
@@ -78,7 +79,8 @@ export default class Cache {
             onBeforeDelete,
             logger: (options) => {
                 const {data, type, msg} = options;
-                onLogger({type: LOGGER_TYPE.HF, data: data, msg: `${LOGGER_TYPE.HF}-${type} ${msg}`})
+                const logType = type === 'error' ? LOGGER_TYPE.ERROR : LOGGER_TYPE.HF;
+                onLogger({type: logType, data: data, msg: `${LOGGER_TYPE.HF}-${type} ${msg}`})
             }
         });
         this.allowMonitor = allowMonitor;
