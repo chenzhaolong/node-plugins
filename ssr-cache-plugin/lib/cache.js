@@ -206,8 +206,11 @@ export default class Cache {
                 this.LFLru.delete(key);
                 break;
             default:
-                this.HFLru.delete(key);
-                this.LFLru.delete(key);
+                if (this._has(key, TYPE.HF)) {
+                    this.HFLru.delete(key)
+                } else if (this._has(key, TYPE.LF)) {
+                    this.LFLru.delete(key);
+                }
                 break;
         }
     }
