@@ -144,60 +144,6 @@ export default class Cache {
     }
 
     /**
-     * 检查输入参数是否有效
-     * @param {object} options 入参
-     */
-    _isValidator(options) {
-        const {key, value, expired} = options;
-        if (!isString(key)) {
-            this._logger({
-                type: LOGGER_TYPE.ERROR,
-                msg: `the key ${key.toString()} is error when save in HL-LRU`,
-                data: {saveKey: key}
-            });
-            return false;
-        }
-        if (!value) {
-            this._logger({
-                type: LOGGER_TYPE.ERROR,
-                msg: `the value is empty for key ${key} when save in HL-LRU`,
-                data: {key: key}
-            });
-            return false;
-        }
-        if (expired && !isNumber(expired)) {
-            this._logger({
-                type: LOGGER_TYPE.ERROR,
-                msg: `the expired must be number for key ${key} when save in HL-LRU and use expired`,
-                data: {key: key, expired: expired}
-            });
-            return false;
-        }
-        return true;
-    }
-
-    _saveHF(options) {
-        // 过期HF删除key，将key存入LF
-        if (this.HFLru.isExpired(options.key)) {
-            this.delete(options.key, TYPE.HF);
-            return this.LFLru.save({
-                key: options.key,
-                value: options.value,
-                expired: options.expired,
-                extra: {
-                    times: 0
-                }
-            });
-        } else {
-            return this.HFLru.save({
-                key: options.key,
-                value: options.value,
-                expired: options.expired,
-            });
-        }
-    }
-
-    /**
      * 获取指定的key
      * @param {string | number} key
      * @return {any}
@@ -284,6 +230,63 @@ export default class Cache {
         const LFValues = this.LFLru.getValues(isRank);
         const HFValues = this.HFLru.getValues(isRank);
         return {LFValues, HFValues};
+    }
+
+    /**
+     * 检查输入参数是否有效
+     * @param {object} options 入参
+     */
+    _isValidator(options) {
+        const {key, value, expired} = options;
+        if (!isString(key)) {
+            this._logger({
+                type: LOGGER_TYPE.ERROR,
+                msg: `the key ${key.toString()} is error when save in HL-LRU`,
+                data: {saveKey: key}
+            });
+            return false;
+        }
+        if (!value) {
+            this._logger({
+                type: LOGGER_TYPE.ERROR,
+                msg: `the value is empty for key ${key} when save in HL-LRU`,
+                data: {key: key}
+            });
+            return false;
+        }
+        if (expired && !isNumber(expired)) {
+            this._logger({
+                type: LOGGER_TYPE.ERROR,
+                msg: `the expired must be number for key ${key} when save in HL-LRU and use expired`,
+                data: {key: key, expired: expired}
+            });
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 保存高频数据
+     */
+    _saveHF(options) {
+        // 过期HF删除key，将key存入LF
+        if (this.HFLru.isExpired(options.key)) {
+            this.delete(options.key, TYPE.HF);
+            return this.LFLru.save({
+                key: options.key,
+                value: options.value,
+                expired: options.expired,
+                extra: {
+                    times: 0
+                }
+            });
+        } else {
+            return this.HFLru.save({
+                key: options.key,
+                value: options.value,
+                expired: options.expired,
+            });
+        }
     }
 
     /**
