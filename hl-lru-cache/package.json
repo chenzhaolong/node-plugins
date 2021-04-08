@@ -1,7 +1,7 @@
 {
-  "name": "ssr-cache-plugin",
+  "name": "hl-lru-cache",
   "version": "1.0.0",
-  "description": "ssr缓存插件",
+  "description": "lru缓存插件",
   "main": "index.js",
   "scripts": {
     "test_d": "sh ./bin/test.sh -d",

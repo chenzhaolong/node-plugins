@@ -1,4 +1,4 @@
-# ssr-cache-plugin
+# hl-lru-cache
 
 ### 简介：
 这是一个专门针对资源在node环境中进行内存缓存的插件，它是基于LRU-K算法基础上对其进行合理性优化的算法，这里简称为高低频LRU算法HL-LRU.
@@ -23,7 +23,7 @@ npm install ssr-cache-plugin
 ### 快速上手：
 
 ```
-import CachePlugin from '../index'
+import CachePlugin from 'ssr-cache-plugin'
 const fs = require('fs')
 const cache = new CachePlugin.Cache({
     HFLength: 3,
@@ -74,10 +74,11 @@ onBeforeDelete：每次缓存内存被淘汰时触发的钩子，(key) => void,
 onUpgrade：资源从低频LRU队列升级到高频LRU队列时的钩子， (node) => void,
 onDemotion: 资源从高频LRU队列降级到低频LRU队列时的钩子， (node) => void,
 clearDataTime：每隔多少秒清洗lru的过期的数据，默认为0，只有大于0才会开启,
-onLogger：日志钩子，缓存实例每一步操作都会触发日志钩,
+onLogger：日志钩子，缓存实例每一步操作都会触发日志钩子,
 allowMonitor： 是否允许内存被监督，当全局开启内存监控时，该选项能决定是否允许被监控，被监控后会有可能因为node内存使用过高而该实例进制缓存，具体监控操作下面会描述。默认为false不开启
 ```
-日志钩子：
+
+- 日志钩子：
 
 ```
 ({type, data, msg}) => void
@@ -93,6 +94,10 @@ type：
     LF: 'LF', // 低频LRU
     HF: 'HF', // 高频LRU
     ERROR: 'error' // 错误
+    
+data：底层对外暴露的数据信息；
+
+msg：底层对外暴露的日志信息
 ```
 
 - set方法：缓存数据，成功缓存返回true，否则返回false
@@ -146,14 +151,102 @@ const {LFValue, HFValue} = cache.getValues(true)
 ```
 Cache.setMonitor({
     openMonitor = false, // 是否开启内存监控
-    onNoticeForOOM = () => {}, // 警告函数,如果出现内存监控，则会通过该钩子通知开发者
+    onNoticeForOOM = () => {}, // 警告函数,如果出现内存使用过度，则会通过该钩子通知开发者
     memFilePath = path.resolve(process.cwd(), '../memSnapShot/'), // 溢出文件的存储位置，如果内存溢出或者泄露，会生成一个heapsnapshot文件。
     memoryLimit = {
         oneLevel：默认是85，如果内存使用率超过85，则LFLRU只出不进且会生成heapsnapshot文件，触发onNoticeForOOM钩子。
         twoLevel：默认是80，如果内存使用率在80-85之间，则HFLRU清空且不能进，LFLRU正常
         threeLevel：默认是70，如果在70-80之间，HFLRU只出不进, LFLRU正常
-    } // 设置LRU内存上限
+    } // 设置监控内存各级上限
 })
 ```
 
 ##### 基于LRU缓存对象：
+除了可以使用上述的HL-LRU外，还可以使用基本的LRU，本插件重新定义了LRU，提供了更多更有用的上层API，并且HL-LRU是基于此做上层开发的；
+
+- 创建LRU实例：
+
+```
+const lru = new LRU({
+    length: 最多容纳多少个，默认10000个
+    maxAge: 最大过期时间，
+    onBeforeDelete: 删除某个内存项之前触发的回调
+    logger: 日志钩子
+})
+```
+
+日志类型：
+
+```
+    SAVE: 'save', // 保存
+    UPDATE: 'update', // 更新
+    GET: 'get', // 获取
+    DELETE: 'delete', // 删除
+    RESET: 'reset', // 重置
+    ERROR: 'error' // 错误情况
+```
+- save：保存内容，返回布尔值。
+
+```
+lru.save({
+    key: 索引值，
+    value：保存内容，
+    expired：有效时间
+    extra：额外存储的内容
+})
+```
+
+- get：获取指定的key的节点值，没有返回null
+
+```
+const node = lru.get(key)
+```
+
+- delete: 删除制定的key，返回布尔值
+
+```
+lru.delete(key)
+```
+
+- getValues: 返回所有缓存的内容，用数组表示；
+
+```
+const array = lru.getValues() // 不按排序
+
+or
+
+const array = lru.getValues(true) // 按排序
+```
+
+- getKeys：返回手游keys，用数组表示
+
+```
+const array = lru.getKeys() // 不按排序
+
+or
+
+const array = lru.getKeys(true) // 按排序
+```
+
+- forceUpdateCache：在缓存期内强制更新该key对应的值
+
+```
+lru.forceUpdateCache(key, value)
+```
+- setExpiredTime: 重新设置该key的过期时间
+
+```
+lru.setExpiredTime(key, expiredTime)
+```
+
+- refresh: 更新缓存的内容，将过期的内容去掉
+
+```
+lru.refresh()
+```
+
+- isOverLength: 是否规定超过长度
+
+- has(key): 是否含有该key的缓存
+
+- isExpired(key): 该key是否过期
