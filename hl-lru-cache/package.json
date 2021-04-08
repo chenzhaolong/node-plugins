@@ -6,7 +6,8 @@
   "scripts": {
     "test_d": "sh ./bin/test.sh -d",
     "test_l": "sh ./bin/test.sh -l",
-    "test_c": "sh ./bin/test.sh -c"
+    "test_c": "sh ./bin/test.sh -c",
+    "test_a": "sh ./bin/test.sh -a"
   },
   "keywords": [
     "ssr",

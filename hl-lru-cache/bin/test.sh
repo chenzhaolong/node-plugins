@@ -14,9 +14,15 @@ while [ -n "$1" ]
         -c)
            file="cache.test.js"
            shift;;
+        -a)
+           file="doubleLink.test.js lru.test.js cache.test.js"
+           shift;;
         *) shift;;
    esac
 done
 if [ "$file" != "" ];then
-   mocha --require babel-register ./ssr-cache-plugin/test/$file
+   for f in $file
+   do
+     mocha --require babel-register ./hl-lru-cache/test/$f
+   done
 fi
