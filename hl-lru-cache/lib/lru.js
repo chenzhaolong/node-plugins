@@ -75,7 +75,7 @@ class LRU {
             this.link.unshift(cache);
             this.logger({
                 type: LOGGER_TYPE.UPDATE,
-                msg: `${key} update`,
+                msg: `key ${key} update`,
                 data: {key}
             });
         } else {
@@ -84,7 +84,7 @@ class LRU {
             this.currentLength += 1;
             this.logger({
                 type: LOGGER_TYPE.SAVE,
-                msg: `${key} save`,
+                msg: `key ${key} save`,
                 data: {key}
             });
         }
@@ -115,7 +115,7 @@ class LRU {
                 this.link.unshift(content);
                 this.logger({
                     type: LOGGER_TYPE.GET,
-                    msg: `${key} get`,
+                    msg: `key ${key} get`,
                     data: {key}
                 });
                 return this.store.get(key);
@@ -139,7 +139,7 @@ class LRU {
         this.currentLength -= 1;
         this.logger({
             type: LOGGER_TYPE.DELETE,
-            msg: `${key} delete`,
+            msg: `key ${key} delete`,
             data: {key}
         });
         return this.link.remove(item => item.key === key);

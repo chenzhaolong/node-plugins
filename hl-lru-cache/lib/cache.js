@@ -70,7 +70,7 @@ class Cache {
             logger: (options) => {
                 const {data, type, msg} = options;
                 const logType = type === 'error' ? LOGGER_TYPE.ERROR : LOGGER_TYPE.LF;
-                onLogger({type: logType, data: data, msg: `${LOGGER_TYPE.LF}-${type} ${msg}`})
+                onLogger({type: logType, data: data, msg: `cache ${LOGGER_TYPE.LF} ${type}: ${msg}`})
             }
         });
         this.HFLru = new LRU({
@@ -80,7 +80,7 @@ class Cache {
             logger: (options) => {
                 const {data, type, msg} = options;
                 const logType = type === 'error' ? LOGGER_TYPE.ERROR : LOGGER_TYPE.HF;
-                onLogger({type: logType, data: data, msg: `${LOGGER_TYPE.HF}-${type} ${msg}`})
+                onLogger({type: logType, data: data, msg: `cache ${LOGGER_TYPE.HF} ${type}: ${msg}`})
             }
         });
         this.allowMonitor = allowMonitor;
@@ -383,7 +383,7 @@ class Cache {
         const {type, msg, data} = options;
         const date = getSystemTime();
         data.currentTime = date.time;
-        this.onLogger({type, msg: `${msg} ${date.systemTime}`, data});
+        this.onLogger({type, msg: `${type} cache: ${msg} ${date.systemTime}`, data});
     }
 
     /**
