@@ -1,7 +1,7 @@
 /**
  * @file 双向链表
  */
-import {isNull, isArray, isFunction, isNumber, isBoolean} from 'lodash';
+const {isNull, isArray, isFunction, isNumber, isBoolean} = require('lodash');
 
 /**
  * List 节点
@@ -286,3 +286,5 @@ export default class DoubleLink {
         this.length = isNull(node) ? 0 : 1;
     }
 }
+
+module.exports = DoubleLink;

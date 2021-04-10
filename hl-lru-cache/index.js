@@ -2,10 +2,10 @@
  * @file 入口
  */
 
-import Cache from './lib/cache'
-import LRU from './lib/lru'
+const Cache = require('./lib/cache');
+const LRU = require('./lib/lru');
 
-export default {
+module.exports = {
     Cache,
     LRU
 }

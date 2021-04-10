@@ -1,9 +1,9 @@
 /**
  * @file lru算法
  */
-import DoubleLink from './doubleLink';
-import {isString, isNumber} from 'lodash';
-import { getSystemTime } from './date';
+const DoubleLink = require('./doubleLink');
+const {isString, isNumber} = require('lodash');
+const { getSystemTime } = require('./date');
 
 const OS = require('os');
 
@@ -20,7 +20,7 @@ const LOGGER_TYPE = {
     ERROR: 'error' // 错误情况
 };
 
-export default class LRU {
+class LRU {
     constructor(options) {
         const {
             length = MAX_LENGTH, // 最多容纳多少个
@@ -311,3 +311,5 @@ function CacheItem(options) {
         this.extra = options.extra;
     }
 }
+
+module.exports = LRU;

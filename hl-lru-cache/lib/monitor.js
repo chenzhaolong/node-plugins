@@ -19,7 +19,7 @@ let Options = {
     }
 };
 
-export default class Monitor {
+class Monitor {
 
     static injectExtraPower (options) {
         let tmp = Object.assign({}, Options.memoryLimit, options.memoryLimit);
@@ -81,3 +81,5 @@ export default class Monitor {
         return Math.round(((heapUsed) / heapTotal) * 100);
     }
 }
+
+module.exports = Monitor;

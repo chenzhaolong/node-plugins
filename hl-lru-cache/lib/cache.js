@@ -2,10 +2,10 @@
  * @file 基于lru的低高频缓存策略
  * todo：对缓存的内容体积做限制
  */
-import LRU from './lru';
-import Monitor from './monitor';
-import { isNull, isNumber, get, isFunction, isString, isObject } from 'lodash';
-import { getSystemTime } from './date'
+const LRU = require('./lru');
+const Monitor = require('./monitor');
+const { isNull, isNumber, get, isFunction, isString, isObject } = require('lodash');
+const { getSystemTime } = require('./date');
 const path = require('path');
 
 const HF_MAX_LENGTH = 10 * 1000;
@@ -33,7 +33,7 @@ const LOGGER_TYPE = {
     ERROR: 'error' // 错误
 };
 
-export default class Cache {
+class Cache {
     /**
      * 全局设置并开启LRU内存监督
      */
@@ -476,3 +476,5 @@ export default class Cache {
         }
     }
 }
+
+module.exports = Cache;

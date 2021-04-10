@@ -2,7 +2,7 @@
  * @file 获取系统时间
  */
 
-export function getSystemTime() {
+function getSystemTime() {
     const date = new Date();
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -15,4 +15,8 @@ export function getSystemTime() {
         systemTime: `${year}-${month}-${day} ${hour}:${minute}:${second} ${milSec}`,
         time: date.getTime()
     }
+}
+
+module.exports = {
+    getSystemTime
 }
