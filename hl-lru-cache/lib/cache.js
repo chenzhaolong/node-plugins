@@ -383,7 +383,7 @@ class Cache {
         const {type, msg, data} = options;
         const date = getSystemTime();
         data.currentTime = date.time;
-        this.onLogger({type, msg: `${type} cache: ${msg} ${date.systemTime}`, data});
+        this.onLogger({type, msg: `cache ${type}: ${msg} ${date.systemTime}`, data});
     }
 
     /**

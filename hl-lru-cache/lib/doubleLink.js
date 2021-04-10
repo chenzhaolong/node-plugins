@@ -13,7 +13,7 @@ function ListNode(val) {
     this.next = null;
 }
 
-export default class DoubleLink {
+class DoubleLink {
     constructor(val) {
         const node = val || isNumber(val) ? new ListNode(val) : null;
         this.head = node;
