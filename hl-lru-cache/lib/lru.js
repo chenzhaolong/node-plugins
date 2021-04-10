@@ -69,6 +69,7 @@ class LRU {
             tail && this.store.delete(tail.value.key);
         }
         const cache = new CacheItem({key, value, expired, extra});
+        const startTime = Date.now();
         if (this.has(key)) {
             this.store.set(key, value);
             this.link.remove(item => item.key === key);
@@ -76,7 +77,7 @@ class LRU {
             this.logger({
                 type: LOGGER_TYPE.UPDATE,
                 msg: `key ${key} update`,
-                data: {key}
+                data: {key, consumeTime: Date.now() - startTime}
             });
         } else {
             this.store.set(key, value);
@@ -85,7 +86,7 @@ class LRU {
             this.logger({
                 type: LOGGER_TYPE.SAVE,
                 msg: `key ${key} save`,
-                data: {key}
+                data: {key, consumeTime: Date.now() - startTime}
             });
         }
         return true
@@ -105,6 +106,7 @@ class LRU {
                 this.delete(key);
                 return null;
             } else {
+                const startTime = Date.now();
                 const target = this.link.get(item => item.key === key);
                 if (!target) {
                     return null;
@@ -116,7 +118,7 @@ class LRU {
                 this.logger({
                     type: LOGGER_TYPE.GET,
                     msg: `key ${key} get`,
-                    data: {key}
+                    data: {key, consumeTime: Date.now() - startTime}
                 });
                 return this.store.get(key);
             }
